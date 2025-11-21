@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ],
+  "functions": {
+    "index.html": {
+      "runtime": "nodejs18.x"
+    }
+  }
+}
