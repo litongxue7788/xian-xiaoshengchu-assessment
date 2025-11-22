@@ -579,225 +579,97 @@
     <script>
         // 修复后的API服务类
         class BailianAPIService {
-            constructor() {
-                this.config = {
-                    apiKey: '',
-                    appId: '',
-                    workspaceId: '',
-                    baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-                    model: 'qwen-max'
-                };
-                this.isConnected = false;
+    constructor() {
+        this.config = {
+            // 使用您的主要域名
+            apiURL: 'https://xian-xiaoshenchu-assessment.vercel.app/api/bailian',
+        };
+        this.isConnected = false;
+    }
+
+    async generateResponse(prompt) {
+        // 先尝试调用Vercel API
+        try {
+            console.log('🌐 调用Vercel API路由...');
+            
+            const response = await fetch(this.config.apiURL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt: prompt,
+                    model: 'qwen-turbo'
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`API请求失败: ${response.status} - ${errorData.error}`);
             }
 
-            // 更新配置
-            updateConfig(apiKey, appId, workspaceId = '') {
-                this.config.apiKey = apiKey;
-                this.config.appId = appId;
-                this.config.workspaceId = workspaceId;
-                console.log('配置已更新:', this.config);
+            const result = await response.json();
+            
+            if (result.success && result.data.output && result.data.output.text) {
+                this.isConnected = true;
+                return result.data.output.text;
+            } else {
+                throw new Error('API响应格式异常');
             }
-
-            // 初始化连接
-            async initialize() {
-                try {
-                    const statusElement = document.getElementById('apiStatus');
-                    statusElement.className = 'api-status connecting';
-                    statusElement.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> 连接百炼API...';
-
-                    // 检查配置
-                    if (!this.config.apiKey || !this.config.appId) {
-                        throw new Error('请先配置API Key和APP ID');
-                    }
-
-                    // 测试连接
-                    const testResponse = await this.generateResponse('你好，请回复"连接成功"');
-                    
-                    if (testResponse && testResponse.includes('连接成功')) {
-                        this.isConnected = true;
-                        statusElement.className = 'api-status connected';
-                        statusElement.innerHTML = '<i class="fas fa-check-circle"></i> 百炼API已连接';
-                        this.showNotification('AI服务连接成功', 'success');
-                        // 连接成功后隐藏配置面板
-                        document.getElementById('configPanel').classList.remove('show');
-                        return true;
-                    } else {
-                        throw new Error('连接测试失败');
-                    }
-                } catch (error) {
-                    console.error('API初始化失败:', error);
-                    const statusElement = document.getElementById('apiStatus');
-                    statusElement.className = 'api-status disconnected';
-                    statusElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 连接失败';
-                    this.showNotification(`AI服务连接失败: ${error.message}，将使用本地模式`, 'error');
-                    return false;
-                }
-            }
-
-            // 生成AI响应
-            async generateResponse(prompt) {
-                // 如果未连接成功，使用本地回复
-                if (!this.isConnected) {
-                    return this.getLocalResponse(prompt);
-                }
-
-                try {
-                    const headers = {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${this.config.apiKey}`,
-                        'X-DashScope-AppId': this.config.appId
-                    };
-                    
-                    const requestBody = {
-                        model: this.config.model,
-                        input: {
-                            messages: [
-                                {
-                                    role: 'system',
-                                    content: '你是专业的小升初咨询顾问，为西安地区学生和家长提供升学指导。回答要准确、有用、简洁。'
-                                },
-                                {
-                                    role: 'user',
-                                    content: prompt
-                                }
-                            ]
-                        },
-                        parameters: {
-                            temperature: 0.7,
-                            max_tokens: 2000
-                        }
-                    };
-
-                    // 添加workspaceId如果存在
-                    if (this.config.workspaceId) {
-                        requestBody.workspace_id = this.config.workspaceId;
-                    }
-
-                    const apiURL = `${this.config.baseURL}/${this.config.model}/completions`;
-                    
-                    const response = await fetch(apiURL, {
-                        method: 'POST',
-                        headers: headers,
-                        body: JSON.stringify(requestBody)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-
-                    const data = await response.json();
-
-                    // 解析响应
-                    if (data.output && data.output.text) {
-                        return data.output.text;
-                    } else if (data.output && data.output.choices && data.output.choices[0] && data.output.choices[0].message) {
-                        return data.output.choices[0].message.content;
-                    } else {
-                        throw new Error('无法解析API响应');
-                    }
-                    
-                } catch (error) {
-                    console.error('API请求失败:', error);
-                    return this.getLocalResponse(prompt);
-                }
-            }
-
-            // 显示通知
-            showNotification(message, type = 'info') {
-                const notification = document.createElement('div');
-                notification.className = 'api-notification';
-                notification.innerHTML = `
-                    <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
-                                padding: 12px 20px; border-radius: 8px; background: ${type === 'success' ? '#48bb78' : type === 'error' ? '#f56565' : '#4299e1'}; 
-                                color: white; font-size: 14px; z-index: 1001; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                        ${message}
-                    </div>
-                `;
-                document.body.appendChild(notification);
-                
-                setTimeout(() => {
-                    notification.remove();
-                }, 3000);
-            }
-
-            // 本地智能回复
-            getLocalResponse(prompt) {
-                const responses = {
-                    '推荐适合的学校': `基于您的评估数据，我为您推荐以下学校：
-                            
-🏫 冲刺目标：
-• 西安翱翔中学 - 理科强势，适合学业优秀的学生
-• 西安辅轮中学 - 文理均衡，综合实力强
-
-🎯 匹配目标：
-• 西安太白学校 - 素质教育，中签率较高
-• 高新一中沣东中学 - 高新系资源，教学质量保障
-
-✅ 保底选择：
-• 您所在区域的公办学校 - 免学费，稳妥选择
-
-需要我详细分析某所学校吗？`,
-
-                    '如何准备面试': `小升初面试准备建议：
-
-📚 学业准备：
-• 复习五年级重点知识
-• 准备1-2分钟的自我介绍
-• 练习基础的口算和阅读理解
-
-💼 材料准备：
-• 获奖证书复印件
-• 素质报告册
-• 特长作品集（如有）
-
-🎤 面试技巧：
-• 保持自信，表达清晰
-• 提前了解目标学校特色
-• 准备1-2个提问问题`,
-
-                    '政策解读': `2025年西安小升初主要政策:
-
-📋 招生方式:
-• 公办学校:按学区免试就近入学
-• 民办学校:电脑随机录取(摇号)
-• 特色学校:可组织特色发展测评
-
-📄 重大变化:
-• 西咸新区纳入西安中考体系
-• 民办学校摇号中签率提升
-• 加强学籍管理,杜绝违规招生`,
-
-                    '学习计划': `为您制定个性化学习计划:
-
-📅 每日安排:
-• 语文(40分钟):阅读+基础知识
-• 数学(50分钟):计算+应用题
-• 英语(30分钟):单词+听力
-
-🎯 每周重点:
-• 周一:数学专题训练
-• 周三:语文阅读理解
-• 周五:英语口语练习
-• 周末:综合复习+错题整理`
-                };
-
-                for (const [key, value] of Object.entries(responses)) {
-                    if (prompt.includes(key)) {
-                        return value;
-                    }
-                }
-
-                return `感谢您的提问！关于"${prompt}"，我理解您关心这个问题。
-
-作为AI助手，我可以为您提供：
-• 学校详细分析和比较
-• 个性化学习计划制定
-• 政策解读和报考指导
-• 面试准备和技巧培训
-
-请告诉我更多具体信息，我会给您更精准的建议。`;
-            }
+            
+        } catch (error) {
+            console.error('API调用失败:', error);
+            // 使用本地回复作为降级方案
+            return this.getEnhancedLocalResponse(prompt);
         }
+    }
+
+    getEnhancedLocalResponse(prompt) {
+        const lowerPrompt = prompt.toLowerCase();
+        
+        if (lowerPrompt.includes('学校') || lowerPrompt.includes('推荐')) {
+            return `🏫 学校推荐（智能模式）：
+                
+【顶尖公办学校】
+• 西安铁一中分校 - 理科强势，竞赛优势
+• 西北工业大学附属中学 - 综合实力强
+• 西安交通大学附属中学 - 文理均衡
+
+【优质民办学校】  
+• 西安翱翔中学 - 摇号中签率约35%
+• 西安辅轮中学 - 综合实力优秀
+
+💡 选择策略：根据孩子学业水平合理搭配目标学校`;
+            
+        } else if (lowerPrompt.includes('面试')) {
+            return `🎯 面试准备指南：
+• 准备1-2分钟自我介绍
+• 复习基础知识
+• 整理获奖证书
+• 模拟面试练习`;
+            
+        } else if (lowerPrompt.includes('政策')) {
+            return `📋 2025年政策要点：
+• 公办：学区入学
+• 民办：摇号录取  
+• 时间：4月政策，5月报名，6月摇号`;
+            
+        } else {
+            return `关于"${prompt}"，我理解您的问题。
+
+目前系统正在使用智能模式为您服务。如需更精准的AI回复，请确保API配置正确。
+
+您可以咨询：学校推荐、面试准备、政策解读等问题。`;
+        }
+    }
+}
+
+// 更新API状态显示
+function updateAPIStatus() {
+    const statusElement = document.getElementById('apiStatus');
+    statusElement.className = 'api-status connected';
+    statusElement.innerHTML = '<i class="fas fa-cloud"></i> Vercel API模式';
+}
 
         // 全局变量
         let assessmentData = { scores: {}, familyInfo: {}, totalScore: 0 };
