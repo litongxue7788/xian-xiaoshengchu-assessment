@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>西安小升初智能评估系统 2025版</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; padding: 20px; font-size: 15px; line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px; margin: 0 auto; background: white;
+            border-radius: 24px; padding: 40px; box-shadow: 0 20px 80px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .api-status {
+            position: fixed; top: 20px; right: 20px; padding: 10px 15px;
+            border-radius: 8px; font-size: 14px; font-weight: 600; z-index: 1001;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .api-status.local { background: #ed8936; color: white; }
+        .api-status.connected { background: #48bb78; color: white; }
+        .api-status.error { background: #e53e3e; color: white; }
+        .api-status:hover { transform: translateY(-2px); }
+        .config-panel {
+            position: fixed; top: 80px; right: 20px; background: white;
+            border-radius: 12px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 1000; max-width: 400px; border: 2px solid #667eea; display: none;
+        }
+        .config-panel.show { display: block; }
+        .config-title {
+            font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 15px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .config-input {
+            width: 100%; padding: 10px; border: 2px solid #e2e8f0;
+            border-radius: 8px; margin-bottom: 10px; font-size: 14px;
+        }
+        .config-input:focus { border-color: #667eea; outline: none; }
+        .config-btn {
+            width: 100%; padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white; border: none; border-radius: 8px; cursor: pointer;
+            font-size: 14px; font-weight: 600; margin-bottom: 10px; transition: all 0.3s;
+        }
+        .config-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+        .config-btn.secondary { background: #6c757d; }
+        .config-help { font-size: 12px; color: #718096; margin-top: 10px; line-height: 1.5; }
+        .config-help a { color: #667eea; }
+        .config-status { padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 13px; }
+        .config-status.success { background: #c6f6d5; color: #276749; }
+        .config-status.error { background: #fed7d7; color: #c53030; }
+        .config-status.info { background: #bee3f8; color: #2b6cb0; }
+        .progress-bar {
+            position: absolute; top: 0; left: 0; height: 6px;
+            background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 24px 24px 0 0;
+            transition: width 0.5s ease; width: 25%;
+        }
+        .ai-assistant { position: fixed; bottom: 30px; right: 30px; z-index: 1000; }
+        .ai-assistant-btn {
+            width: 60px; height: 60px; background: linear-gradient(135deg, #ff6a00, #ff3d00);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 32px; cursor: pointer; box-shadow: 0 8px 25px rgba(255, 106, 0, 0.4);
+            transition: all 0.3s ease; border: none;
+        }
+        .ai-assistant-btn:hover { transform: scale(1.1); box-shadow: 0 12px 35px rgba(255, 106, 0, 0.6); }
+        .ai-chat-window {
+            position: absolute; bottom: 80px; right: 0; width: 380px; height: 520px;
+            background: white; border-radius: 20px; box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+            display: none; flex-direction: column; overflow: hidden; border: 2px solid #e2e8f0;
+        }
+        .ai-chat-header {
+            background: linear-gradient(135deg, #ff6a00 0%, #ff3d00 100%); color: white;
+            padding: 20px; display: flex; align-items: center; gap: 12px;
+        }
+        .ai-chat-body { flex: 1; padding: 20px; overflow-y: auto; background: #fff9f5; }
+        .ai-message { margin-bottom: 15px; display: flex; gap: 10px; }
+        .ai-message.assistant { flex-direction: row; }
+        .ai-message.user { flex-direction: row-reverse; }
+        .message-avatar {
+            width: 40px; height: 40px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0;
+        }
+        .ai-message.assistant .message-avatar {
+            background: linear-gradient(135deg, #ff6a00 0%, #ff3d00 100%); color: white;
+        }
+        .ai-message.user .message-avatar { background: #e2e8f0; color: #4a5568; }
+        .message-content {
+            max-width: 70%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.5;
+        }
+        .ai-message.assistant .message-content {
+            background: white; border: 1px solid #e2e8f0; border-bottom-left-radius: 4px;
+        }
+        .ai-message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .ai-chat-input { padding: 15px; border-top: 1px solid #e2e8f0; background: white; }
+        .chat-input-group { display: flex; gap: 10px; }
+        .chat-input {
+            flex: 1; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 25px;
+            outline: none; font-size: 14px;
+        }
+        .chat-input:focus { border-color: #667eea; }
+        .send-btn {
+            width: 40px; height: 40px; border: none; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .send-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .quick-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .quick-action-btn {
+            padding: 6px 12px; background: #f7fafc; border: 1px solid #e2e8f0;
+            border-radius: 15px; font-size: 12px; cursor: pointer; transition: all 0.2s;
+        }
+        .quick-action-btn:hover { background: #667eea; color: white; border-color: #667eea; }
+        .typing-indicator { display: flex; gap: 4px; padding: 8px 0; }
+        .typing-indicator span {
+            width: 8px; height: 8px; background: #667eea; border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        h1 {
+            text-align: center; font-size: 36px; margin-bottom: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; font-weight: 700;
+        }
+        .subtitle { text-align: center; color: #718096; margin-bottom: 40px; font-size: 16px; font-weight: 500; }
+        .ai-badge {
+            display: inline-block; background: linear-gradient(135deg, #ff6a00, #ff3d00);
+            color: white; padding: 6px 16px; border-radius: 20px; font-size: 14px;
+            font-weight: 600; margin-left: 10px; animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .important-notice {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white;
+            padding: 25px; border-radius: 15px; margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+        }
+        .important-notice h3 { color: white; margin-bottom: 15px; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+        .important-notice ul { list-style: none; padding-left: 0; line-height: 1.8; }
+        .important-notice li { display: flex; align-items: flex-start; margin-bottom: 8px; }
+        .important-notice li::before { content: "⚠️"; margin-right: 12px; font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+        .step-indicator {
+            display: flex; justify-content: space-between; margin-bottom: 40px; position: relative;
+            max-width: 800px; margin-left: auto; margin-right: auto;
+        }
+        .step-indicator::before {
+            content: ''; position: absolute; top: 25px; left: 60px; right: 60px; height: 4px;
+            background: #e2e8f0; z-index: 0;
+        }
+        .step {
+            display: flex; flex-direction: column; align-items: center; position: relative;
+            z-index: 1; flex: 1; cursor: pointer;
+        }
+        .step-number {
+            width: 50px; height: 50px; border-radius: 50%; background: #e2e8f0; color: #a0aec0;
+            display: flex; align-items: center; justify-content: center; font-weight: 700;
+            font-size: 20px; margin-bottom: 12px; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .step.active .step-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;
+            transform: scale(1.15); box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+        }
+        .step.completed .step-number { background: #48bb78; color: white; }
+        .step-label { font-size: 15px; color: #718096; text-align: center; font-weight: 500; }
+        .step.active .step-label { color: #667eea; font-weight: 600; }
+        .section { display: none; animation: fadeInUp 0.6s ease; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .section.active { display: block; }
+        .dimension-card {
+            background: #f7fafc; border-radius: 16px; padding: 30px; margin-bottom: 24px;
+            border: 2px solid #e2e8f0; transition: all 0.3s;
+        }
+        .dimension-card:hover { border-color: #667eea; box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15); transform: translateY(-2px); }
+        .dimension-title { font-size: 22px; color: #2d3748; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; font-weight: 600; }
+        .dimension-desc { color: #718096; margin-bottom: 24px; font-size: 15px; line-height: 1.7; }
+        .score-options { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+        .score-option input[type="radio"] { display: none; }
+        .score-label {
+            display: block; padding: 20px 12px; text-align: center; border: 2px solid #e2e8f0;
+            border-radius: 12px; cursor: pointer; transition: all 0.3s; background: white;
+            min-height: 120px; display: flex; flex-direction: column; justify-content: center;
+        }
+        .score-label:hover { border-color: #667eea; transform: translateY(-4px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.2); }
+        .score-option input[type="radio"]:checked + .score-label {
+            border-color: #667eea; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; font-weight: 600; box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3); transform: translateY(-2px);
+        }
+        .score-number { font-size: 32px; font-weight: 700; display: block; margin-bottom: 8px; }
+        .score-desc { font-size: 13px; display: block; line-height: 1.5; }
+        .info-section { background: #f7fafc; border-radius: 16px; padding: 30px; margin-bottom: 24px; border: 2px solid #e2e8f0; }
+        .info-section h3 { font-size: 22px; font-weight: 600; margin-bottom: 20px; color: #2d3748; }
+        .info-group { margin-bottom: 20px; }
+        .info-label { display: block; font-weight: 600; color: #2d3748; margin-bottom: 10px; font-size: 15px; }
+        .info-select {
+            width: 100%; padding: 14px 16px; border: 2px solid #e2e8f0; border-radius: 10px;
+            font-size: 15px; transition: all 0.3s; background: white;
+        }
+        .info-select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .checkbox-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+        .checkbox-label { display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 12px; border-radius: 8px; transition: all 0.2s; }
+        .checkbox-label:hover { background: #edf2f7; }
+        .checkbox-label input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+        .button-group { display: flex; gap: 16px; justify-content: center; margin-top: 40px; }
+        .btn {
+            padding: 16px 40px; border: none; border-radius: 12px; font-size: 16px;
+            font-weight: 600; cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 8px;
+        }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4); }
+        .btn-secondary { background: #e2e8f0; color: #4a5568; }
+        .btn-secondary:hover { background: #cbd5e0; transform: translateY(-2px); }
+        .result-card { background: white; border-radius: 16px; padding: 30px; margin-bottom: 24px; border: 2px solid #e2e8f0; }
+        .result-title { font-size: 24px; color: #2d3748; margin-bottom: 24px; padding-left: 18px; border-left: 5px solid #667eea; font-weight: 600; }
+        .chart-container { position: relative; height: 320px; max-height: 320px; margin: 20px auto; max-width: 500px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin: 20px 0; }
+        .stat-card {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 25px;
+            border-radius: 14px; border-left: 5px solid #667eea; transition: all 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 12px 35px rgba(0,0,0,0.12); }
+        .stat-label { font-size: 14px; color: #718096; margin-bottom: 10px; font-weight: 500; }
+        .stat-value { font-size: 36px; font-weight: 700; color: #667eea; margin-bottom: 8px; line-height: 1; }
+        .stat-trend { font-size: 13px; color: #48bb78; font-weight: 500; }
+        .ai-loading {
+            text-align: center; padding: 40px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px; margin: 20px 0; border: 2px dashed #667eea;
+        }
+        .ai-loading-spinner {
+            display: inline-block; width: 50px; height: 50px; border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .success-box { background: #f0fff4; padding: 20px; border-radius: 12px; border-left: 4px solid #48bb78; margin-bottom: 15px; }
+        .success-box h4 { color: #276749; margin-bottom: 15px; }
+        .success-box ul { margin-left: 20px; line-height: 1.8; }
+        @media (max-width: 768px) {
+            .container { padding: 20px; } h1 { font-size: 28px; }
+            .score-options { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: 1fr; }
+            .button-group { flex-direction: column; } .btn { width: 100%; justify-content: center; }
+            .ai-chat-window { width: 300px; height: 400px; right: -20px; }
+            .ai-assistant { bottom: 20px; right: 20px; }
+            .config-panel { max-width: 300px; right: 10px; left: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="api-status local" id="apiStatus" onclick="toggleConfigPanel()">
+        <i class="fas fa-laptop"></i> <span id="statusText">本地模式 (点击配置API)</span>
+    </div>
+
+    <div class="config-panel" id="configPanel">
+        <div class="config-title"><i class="fas fa-key"></i> 阿里云百炼API配置</div>
+        <div class="config-status info" id="configStatus">请输入API配置信息以启用AI智能服务</div>
+        <input type="password" class="config-input" id="apiKeyInput" placeholder="API Key (sk-开头)">
+        <input type="text" class="config-input" id="appIdInput" placeholder="APP ID (应用ID)">
+        <button class="config-btn" onclick="saveAndTestConfig()"><i class="fas fa-plug"></i> 保存并测试连接</button>
+        <button class="config-btn secondary" onclick="useLocalMode()"><i class="fas fa-laptop"></i> 使用本地模式</button>
+        <button class="config-btn secondary" onclick="clearConfig()"><i class="fas fa-trash"></i> 清除配置</button>
+        <div class="config-help">
+            <strong>获取步骤：</strong><br>
+            1. 登录<a href="https://bailian.console.aliyun.com" target="_blank">阿里云百炼控制台</a><br>
+            2. 在"应用管理"中创建/查看应用，复制APP ID<br>
+            3. 在"密钥管理"中创建API Key<br>
+            <strong>注意：</strong>API Key以"sk-"开头
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="progress-bar" id="progressBar"></div>
+        <h1>🎓 西安小升初智能评估系统 <span class="ai-badge">AI助手</span></h1>
+        <p class="subtitle">个性化评估 · 智能规划 · 全程AI指导</p>
+
+        <div class="ai-assistant">
+            <button class="ai-assistant-btn" onclick="toggleChat()">🐱</button>
+            <div class="ai-chat-window" id="chatWindow">
+                <div class="ai-chat-header">
+                    <div style="font-size: 32px;">🐱</div>
+                    <div>
+                        <div style="font-weight: 600;">小喵升学助手</div>
+                        <div style="font-size: 12px; opacity: 0.8;" id="chatApiStatus">本地模式</div>
+                    </div>
+                </div>
+                <div class="ai-chat-body" id="chatBody">
+                    <div class="ai-message assistant">
+                        <div class="message-avatar">🐱</div>
+                        <div class="message-content">
+                            喵~您好！我是小升初助手小喵！<br>
+                            🎓 解答择校疑问<br>
+                            🏫 分析学校特点<br>
+                            📚 制定学习计划<br>
+                            📋 提供政策解读<br>
+                            <small>💡 点击右上角状态栏配置百炼API获得更智能的服务！</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="ai-chat-input">
+                    <div class="chat-input-group">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="输入您的问题..." onkeypress="handleKeyPress(event)">
+                        <button class="send-btn" id="sendBtn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                    <div class="quick-actions">
+                        <button class="quick-action-btn" onclick="quickAction('推荐适合我孩子的学校')">推荐学校</button>
+                        <button class="quick-action-btn" onclick="quickAction('如何准备小升初面试')">面试准备</button>
+                        <button class="quick-action-btn" onclick="quickAction('2025年西安小升初政策解读')">政策解读</button>
+                        <button class="quick-action-btn" onclick="quickAction('制定学习计划')">学习计划</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="important-notice">
+            <h3><i class="fas fa-exclamation-triangle"></i> 2025年重大政策变化!</h3>
+            <ul>
+                <li><strong>从2025年起,西咸新区中考正式纳入西安体系!</strong></li>
+                <li>原咸阳划区(秦汉、泾河、空港)的学生不再参加咸阳中考</li>
+                <li>西咸新区形成独立招生单元,拥有更多优质高中选择</li>
+                <li>热门学校中签率普遍提升10-15个百分点</li>
+            </ul>
+        </div>
+
+        <div class="step-indicator">
+            <div class="step active" id="step1-indicator" onclick="showStep(1)"><div class="step-number">1</div><div class="step-label">能力评估</div></div>
+            <div class="step" id="step2-indicator" onclick="showStep(2)"><div class="step-number">2</div><div class="step-label">家庭信息</div></div>
+            <div class="step" id="step3-indicator" onclick="showStep(3)"><div class="step-number">3</div><div class="step-label">能力分析</div></div>
+            <div class="step" id="step4-indicator" onclick="showStep(4)"><div class="step-number">4</div><div class="step-label">AI推荐</div></div>
+        </div>
+
+        <div id="step1" class="section active">
+            <div class="dimension-card">
+                <div class="dimension-title">📚 维度一:学业成绩</div>
+                <div class="dimension-desc">评估孩子在班级/年级的学业成绩排名情况</div>
+                <div class="score-options">
+                    <div class="score-option"><input type="radio" name="score1" id="score1-5" value="5"><label for="score1-5" class="score-label"><span class="score-number">5</span><span class="score-desc">年级前5%<br>非常优秀</span></label></div>
+                    <div class="score-option"><input type="radio" name="score1" id="score1-4" value="4"><label for="score1-4" class="score-label"><span class="score-number">4</span><span class="score-desc">年级前15%<br>优秀</span></label></div>
+                    <div class="score-option"><input type="radio" name="score1" id="score1-3" value="3"><label for="score1-3" class="score-label"><span class="score-number">3</span><span class="score-desc">年级前30%<br>良好</span></label></div>
+                    <div class="score-option"><input type="radio" name="score1" id="score1-2" value="2"><label for="score1-2" class="score-label"><span class="score-number">2</span><span class="score-desc">年级前50%<br>一般</span></label></div>
+                    <div class="score-option"><input type="radio" name="score1" id="score1-1" value="1"><label for="score1-1" class="score-label"><span class="score-number">1</span><span class="score-desc">年级50%后<br>需努力</span></label></div>
+                </div>
+            </div>
+
+            <div class="dimension-card">
+                <div class="dimension-title">🎨 维度二:综合素养</div>
+                <div class="dimension-desc">评估孩子的特长、获奖情况和综合发展水平</div>
+                <div class="score-options">
+                    <div class="score-option"><input type="radio" name="score2" id="score2-5" value="5"><label for="score2-5" class="score-label"><span class="score-number">5</span><span class="score-desc">特长突出<br>省级获奖</span></label></div>
+                    <div class="score-option"><input type="radio" name="score2" id="score2-4" value="4"><label for="score2-4" class="score-label"><span class="score-number">4</span><span class="score-desc">多方发展<br>市级证书</span></label></div>
+                    <div class="score-option"><input type="radio" name="score2" id="score2-3" value="3"><label for="score2-3" class="score-label"><span class="score-number">3</span><span class="score-desc">有特长<br>校级获奖</span></label></div>
+                    <div class="score-option"><input type="radio" name="score2" id="score2-2" value="2"><label for="score2-2" class="score-label"><span class="score-number">2</span><span class="score-desc">素养一般<br>参与活动</span></label></div>
+                    <div class="score-option"><input type="radio" name="score2" id="score2-1" value="1"><label for="score2-1" class="score-label"><span class="score-number">1</span><span class="score-desc">需要培养<br>较少参与</span></label></div>
+                </div>
+            </div>
+
+            <div class="dimension-card">
+                <div class="dimension-title">📖 维度三:学习习惯</div>
+                <div class="dimension-desc">评估孩子的自律性和学习主动性</div>
+                <div class="score-options">
+                    <div class="score-option"><input type="radio" name="score3" id="score3-5" value="5"><label for="score3-5" class="score-label"><span class="score-number">5</span><span class="score-desc">非常自律<br>主动学习</span></label></div>
+                    <div class="score-option"><input type="radio" name="score3" id="score3-4" value="4"><label for="score3-4" class="score-label"><span class="score-number">4</span><span class="score-desc">较为自律<br>少监督</span></label></div>
+                    <div class="score-option"><input type="radio" name="score3" id="score3-3" value="3"><label for="score3-3" class="score-label"><span class="score-number">3</span><span class="score-desc">需要监督</span></label></div>
+                    <div class="score-option"><input type="radio" name="score3" id="score3-2" value="2"><label for="score3-2" class="score-label"><span class="score-number">2</span><span class="score-desc">习惯一般<br>多督促</span></label></div>
+                    <div class="score-option"><input type="radio" name="score3" id="score3-1" value="1"><label for="score3-1" class="score-label"><span class="score-number">1</span><span class="score-desc">习惯较差<br>需培养</span></label></div>
+                </div>
+            </div>
+
+            <div class="dimension-card">
+                <div class="dimension-title">💪 维度四:心理素质</div>
+                <div class="dimension-desc">评估孩子的抗压能力和心理承受能力</div>
+                <div class="score-options">
+                    <div class="score-option"><input type="radio" name="score4" id="score4-5" value="5"><label for="score4-5" class="score-label"><span class="score-number">5</span><span class="score-desc">抗压强<br>心态好</span></label></div>
+                    <div class="score-option"><input type="radio" name="score4" id="score4-4" value="4"><label for="score4-4" class="score-label"><span class="score-number">4</span><span class="score-desc">适应性好<br>较稳定</span></label></div>
+                    <div class="score-option"><input type="radio" name="score4" id="score4-3" value="3"><label for="score4-3" class="score-label"><span class="score-number">3</span><span class="score-desc">一般水平</span></label></div>
+                    <div class="score-option"><input type="radio" name="score4" id="score4-2" value="2"><label for="score4-2" class="score-label"><span class="score-number">2</span><span class="score-desc">容易焦虑<br>压力大</span></label></div>
+                    <div class="score-option"><input type="radio" name="score4" id="score4-1" value="1"><label for="score4-1" class="score-label"><span class="score-number">1</span><span class="score-desc">需要关注<br>心理脆弱</span></label></div>
+                </div>
+            </div>
+
+            <div class="dimension-card">
+                <div class="dimension-title">👨‍👩‍👧 维度五:家庭支持</div>
+                <div class="dimension-desc">评估家庭在时间、经济、精力方面的支持能力</div>
+                <div class="score-options">
+                    <div class="score-option"><input type="radio" name="score5" id="score5-5" value="5"><label for="score5-5" class="score-label"><span class="score-number">5</span><span class="score-desc">时间充足<br>全力支持</span></label></div>
+                    <div class="score-option"><input type="radio" name="score5" id="score5-4" value="4"><label for="score5-4" class="score-label"><span class="score-number">4</span><span class="score-desc">积极支持<br>条件较好</span></label></div>
+                    <div class="score-option"><input type="radio" name="score5" id="score5-3" value="3"><label for="score5-3" class="score-label"><span class="score-number">3</span><span class="score-desc">一般支持<br>条件一般</span></label></div>
+                    <div class="score-option"><input type="radio" name="score5" id="score5-2" value="2"><label for="score5-2" class="score-label"><span class="score-number">2</span><span class="score-desc">有限支持<br>条件有限</span></label></div>
+                    <div class="score-option"><input type="radio" name="score5" id="score5-1" value="1"><label for="score5-1" class="score-label"><span class="score-number">1</span><span class="score-desc">支持不足<br>条件较差</span></label></div>
+                </div>
+            </div>
+            <div class="button-group"><button class="btn btn-primary" onclick="goToStep2()">下一步:填写家庭信息 →</button></div>
+        </div>
+
+        <div id="step2" class="section">
+            <div class="info-section">
+                <h3>📋 家庭基本信息</h3>
+                <div class="info-group">
+                    <label class="info-label">孩子当前年级</label>
+                    <select class="info-select" id="grade"><option value="">请选择</option><option value="4">四年级</option><option value="5">五年级</option><option value="6">六年级</option></select>
+                </div>
+                <div class="info-group">
+                    <label class="info-label">户籍所在区</label>
+                    <select class="info-select" id="district"><option value="">请选择</option><option value="高新区">高新区</option><option value="雁塔区">雁塔区</option><option value="碑林区">碑林区</option><option value="新城区">新城区</option><option value="莲湖区">莲湖区</option><option value="未央区">未央区</option><option value="灞桥区">灞桥区</option><option value="长安区">长安区</option><option value="曲江新区">曲江新区</option><option value="西咸新区">西咸新区</option><option value="航天基地">航天基地</option><option value="外地">外地户籍</option></select>
+                </div>
+                <div class="info-group">
+                    <label class="info-label">是否有学区房</label>
+                    <select class="info-select" id="hasHouse"><option value="">请选择</option><option value="yes-good">有,对口学校较好</option><option value="yes-normal">有,对口学校一般</option><option value="no">暂无,考虑购买</option><option value="rent">租房居住</option></select>
+                </div>
+                <div class="info-group">
+                    <label class="info-label">家庭教育预算(三年总计)</label>
+                    <select class="info-select" id="budget"><option value="">请选择</option><option value="low">4万以内(只能选公办)</option><option value="medium">4-8万(可考虑部分民办)</option><option value="high">8万以上(民办无压力)</option></select>
+                </div>
+                <div class="info-group">
+                    <label class="info-label">孩子的特长优势(可多选)</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label"><input type="checkbox" value="数学" class="strength-check"> 数学突出</label>
+                        <label class="checkbox-label"><input type="checkbox" value="语文" class="strength-check"> 语文突出</label>
+                        <label class="checkbox-label"><input type="checkbox" value="英语" class="strength-check"> 英语突出</label>
+                        <label class="checkbox-label"><input type="checkbox" value="艺术" class="strength-check"> 艺术特长</label>
+                        <label class="checkbox-label"><input type="checkbox" value="体育" class="strength-check"> 体育特长</label>
+                        <label class="checkbox-label"><input type="checkbox" value="科技" class="strength-check"> 科技创新</label>
+                        <label class="checkbox-label"><input type="checkbox" value="编程" class="strength-check"> 编程能力</label>
+                        <label class="checkbox-label"><input type="checkbox" value="书法" class="strength-check"> 书法</label>
+                    </div>
+                </div>
+                <div class="info-group">
+                    <label class="info-label">孩子的学习意愿</label>
+                    <select class="info-select" id="motivation"><option value="">请选择</option><option value="high">非常主动,有强烈学习意愿</option><option value="medium">比较配合,需要适当引导</option><option value="low">学习意愿一般,需要督促</option></select>
+                </div>
+                <div class="info-group">
+                    <label class="info-label">是否接受摇号不确定性</label>
+                    <select class="info-select" id="acceptLottery"><option value="">请选择</option><option value="yes">可以接受,愿意冲刺名校</option><option value="cautious">谨慎态度,希望稳妥为主</option><option value="no">不接受,必须确保有学上</option></select>
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="goToStep1()">← 上一步</button>
+                <button class="btn btn-primary" onclick="generateReport()">生成可视化报告 →</button>
+            </div>
+        </div>
+
+        <div id="step3" class="section">
+            <div class="result-card">
+                <div class="result-title">📊 综合能力雷达图</div>
+                <div class="chart-container"><canvas id="radarChart"></canvas></div>
+            </div>
+            <div class="result-card">
+                <div class="result-title">🎯 竞争力评估</div>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-label">综合得分</div><div class="stat-value" id="totalScore">0</div><div class="stat-trend" id="scoreTrend">超过全市60%的学生</div></div>
+                    <div class="stat-card"><div class="stat-label">竞争力等级</div><div class="stat-value" id="competitiveLevel" style="font-size: 28px;">B+</div><div class="stat-trend">具备冲刺优质学校潜力</div></div>
+                    <div class="stat-card"><div class="stat-label">最强维度</div><div class="stat-value" id="strongestDim" style="font-size: 24px;">--</div><div class="stat-trend">保持并发挥优势</div></div>
+                    <div class="stat-card"><div class="stat-label">提升重点</div><div class="stat-value" id="weakestDim" style="font-size: 24px;">--</div><div class="stat-trend">短期重点改进方向</div></div>
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="goToStep2()">← 返回修改</button>
+                <button class="btn btn-primary" onclick="goToStep4()">查看AI择校方案 →</button>
+            </div>
+        </div>
+
+        <div id="step4" class="section">
+            <div class="result-card">
+                <div class="result-title">🏫 AI智能学校推荐</div>
+                <div id="schoolRecommendation"><div class="ai-loading"><div class="ai-loading-spinner"></div><h4>🤖 AI正在生成个性化择校方案...</h4></div></div>
+            </div>
+            <div class="result-card">
+                <div class="result-title">💡 AI决策建议</div>
+                <div id="decisionAdvice"></div>
+            </div>
+            <div class="result-card">
+                <div class="result-title">⏰ 个性化时间规划</div>
+                <div id="timeline"></div>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="goToStep3()">← 返回分析</button>
+                <button class="btn btn-primary" onclick="window.print()">🖨️ 打印完整报告</button>
+                <button class="btn btn-secondary" onclick="resetAssessment()">🔄 重新评估</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 全局配置 ====================
+        const CONFIG = { apiKey: '', appId: '', isConnected: false, useLocalMode: true };
+        let assessmentData = { scores: {}, familyInfo: {}, totalScore: 0 };
+        let radarChart = null;
+        let chatHistory = [];
+
+        // ==================== API配置功能 ====================
+        function toggleConfigPanel() {
+            document.getElementById('configPanel').classList.toggle('show');
+        }
+
+        async function saveAndTestConfig() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            const appId = document.getElementById('appIdInput').value.trim();
+            const statusEl = document.getElementById('configStatus');
+            
+            if (!apiKey || !appId) {
+                statusEl.className = 'config-status error';
+                statusEl.textContent = '❌ 请填写完整的API Key和APP ID';
+                return;
+            }
+            if (!apiKey.startsWith('sk-')) {
+                statusEl.className = 'config-status error';
+                statusEl.textContent = '❌ API Key格式错误，应以"sk-"开头';
+                return;
+            }
+            
+            statusEl.className = 'config-status info';
+            statusEl.textContent = '🔄 正在测试连接...';
+            
+            CONFIG.apiKey = apiKey;
+            CONFIG.appId = appId;
+            
+            try {
+                const testResult = await callBailianAPI('你好，请简单回复"连接成功"');
+                if (testResult) {
+                    CONFIG.isConnected = true;
+                    CONFIG.useLocalMode = false;
+                    statusEl.className = 'config-status success';
+                    statusEl.textContent = '✅ 连接成功！AI服务已启用';
+                    updateApiStatusUI(true);
+                    setTimeout(() => toggleConfigPanel(), 1500);
+                }
+            } catch (error) {
+                statusEl.className = 'config-status error';
+                statusEl.textContent = '❌ 连接失败: ' + error.message;
+                CONFIG.isConnected = false;
+            }
+        }
+
+        function useLocalMode() {
+            CONFIG.useLocalMode = true;
+            CONFIG.isConnected = false;
+            updateApiStatusUI(false);
+            document.getElementById('configStatus').className = 'config-status info';
+            document.getElementById('configStatus').textContent = '已切换到本地模式';
+            toggleConfigPanel();
+        }
+
+        function clearConfig() {
+            CONFIG.apiKey = '';
+            CONFIG.appId = '';
+            CONFIG.isConnected = false;
+            CONFIG.useLocalMode = true;
+            document.getElementById('apiKeyInput').value = '';
+            document.getElementById('appIdInput').value = '';
+            updateApiStatusUI(false);
+            document.getElementById('configStatus').className = 'config-status info';
+            document.getElementById('configStatus').textContent = '配置已清除';
+        }
+
+        function updateApiStatusUI(connected) {
+            const statusEl = document.getElementById('apiStatus');
+            const textEl = document.getElementById('statusText');
+            const chatStatus = document.getElementById('chatApiStatus');
+            
+            if (connected) {
+                statusEl.className = 'api-status connected';
+                textEl.innerHTML = '<i class="fas fa-check-circle"></i> AI已连接';
+                chatStatus.textContent = '百炼AI已连接';
+            } else {
+                statusEl.className = 'api-status local';
+                textEl.innerHTML = '<i class="fas fa-laptop"></i> 本地模式 (点击配置)';
+                chatStatus.textContent = '本地模式';
+            }
+        }
+
+        // ==================== 百炼API调用 ====================
+        async function callBailianAPI(prompt, context = '') {
+            if (!CONFIG.apiKey || !CONFIG.appId) throw new Error('API未配置');
+            
+            const systemPrompt = `你是西安小升初升学顾问"小喵"，专业、友好、简洁。
+主要职责：解答西安小升初政策、学校推荐、学习规划。
+2025年重要政策：西咸新区纳入西安中考体系，民办摇号录取，公办学区入学。
+回答要求：简洁实用，200字以内，重点突出。${context ? '\n学生情况：' + context : ''}`;
+
+            const response = await fetch('https://dashscope.aliyuncs.com/api/v1/apps/' + CONFIG.appId + '/completion', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + CONFIG.apiKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    input: { prompt: prompt },
+                    parameters: { 
+                        incremental_output: false,
+                        has_thoughts: false
+                    },
+                    debug: {}
+                })
+            });
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.message || '请求失败: ' + response.status);
+            }
+
+            const data = await response.json();
+            if (data.output && data.output.text) return data.output.text;
+            throw new Error('响应格式异常');
+        }
+
+        // ==================== 聊天功能 ====================
+        function toggleChat() {
+            const win = document.getElementById('chatWindow');
+            win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function handleKeyPress(e) { if (e.key === 'Enter') sendMessage(); }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            
+            addMessage(msg, 'user');
+            input.value = '';
+            document.getElementById('sendBtn').disabled = true;
+            
+            showTyping();
+            
+            try {
+                let response;
+                if (CONFIG.isConnected && !CONFIG.useLocalMode) {
+                    const ctx = assessmentData.totalScore > 0 ? 
+                        `综合得分${assessmentData.totalScore}分,${assessmentData.familyInfo.district || ''}户籍` : '';
+                    response = await callBailianAPI(msg, ctx);
+                } else {
+                    response = getLocalResponse(msg);
+                }
+                removeTyping();
+                addMessage(response, 'assistant');
+            } catch (error) {
+                removeTyping();
+                addMessage('抱歉，AI服务暂时不可用：' + error.message, 'assistant');
+            }
+            
+            document.getElementById('sendBtn').disabled = false;
+        }
+
+        function quickAction(action) {
+            document.getElementById('chatInput').value = action;
+            sendMessage();
+        }
+
+        function addMessage(content, role) {
+            const body = document.getElementById('chatBody');
+            const div = document.createElement('div');
+            div.className = `ai-message ${role}`;
+            div.innerHTML = `
+                <div class="message-avatar">${role === 'assistant' ? '🐱' : '👤'}</div>
+                <div class="message-content">${content.replace(/\n/g, '<br>')}</div>
+            `;
+            body.appendChild(div);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function showTyping() {
+            const body = document.getElementById('chatBody');
+            const div = document.createElement('div');
+            div.className = 'ai-message assistant';
+            div.id = 'typing-indicator';
+            div.innerHTML = `<div class="message-avatar">🐱</div><div class="message-content"><div class="typing-indicator"><span></span><span></span><span></span></div></div>`;
+            body.appendChild(div);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function removeTyping() {
+            const el = document.getElementById('typing-indicator');
+            if (el) el.remove();
+        }
+
+        function getLocalResponse(msg) {
+            const responses = {
+                '学校': '🏫 西安热门初中：铁一中、西工大附中、翱翔中学、汇知中学等。建议根据孩子成绩和户籍选择冲刺、匹配、保底三档学校。',
+                '面试': '🎯 面试准备：1.准备2分钟自我介绍 2.复习语数英基础 3.整理获奖证书 4.练习临场应变能力。',
+                '政策': '📋 2025政策要点：公办按学区入学，民办摇号录取，西咸新区纳入西安中考体系。报名时间通常在4-5月。',
+                '计划': '📅 学习计划建议：每日语文40分钟（阅读+写作），数学50分钟（基础+思维），英语30分钟，保证休息和运动。'
+            };
+            for (const [key, val] of Object.entries(responses)) {
+                if (msg.includes(key)) return val;
+            }
+            return '喵~感谢您的提问！建议您点击右上角配置百炼API，获得更专业的AI回答。或者您可以问我关于学校推荐、面试准备、政策解读等问题。';
+        }
+
+        // ==================== 评估系统 ====================
+        function showStep(n) {
+            document.getElementById('progressBar').style.width = `${(n/4)*100}%`;
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            for (let i = 1; i <= 4; i++) {
+                const ind = document.getElementById(`step${i}-indicator`);
+                ind.classList.remove('active', 'completed');
+                if (i < n) ind.classList.add('completed');
+                else if (i === n) ind.classList.add('active');
+            }
+            document.getElementById(`step${n}`).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function goToStep1() { showStep(1); }
+        
+        function goToStep2() {
+            for (let i = 1; i <= 5; i++) {
+                if (!document.querySelector(`input[name="score${i}"]:checked`)) {
+                    alert('请完成所有五个维度的评分！');
+                    return;
+                }
+            }
+            for (let i = 1; i <= 5; i++) {
+                assessmentData.scores[`score${i}`] = parseInt(document.querySelector(`input[name="score${i}"]:checked`).value);
+            }
+            showStep(2);
+        }
+
+        function generateReport() {
+            const fields = ['grade', 'district', 'hasHouse', 'budget', 'motivation', 'acceptLottery'];
+            for (const f of fields) {
+                if (!document.getElementById(f).value) {
+                    alert('请填写完整的家庭信息！');
+                    return;
+                }
+            }
+            assessmentData.familyInfo = {
+                grade: document.getElementById('grade').value,
+                district: document.getElementById('district').value,
+                hasHouse: document.getElementById('hasHouse').value,
+                budget: document.getElementById('budget').value,
+                motivation: document.getElementById('motivation').value,
+                acceptLottery: document.getElementById('acceptLottery').value,
+                strengths: Array.from(document.querySelectorAll('.strength-check:checked')).map(cb => cb.value)
+            };
+            assessmentData.totalScore = Object.values(assessmentData.scores).reduce((a, b) => a + b, 0);
+            displayResults();
+            showStep(3);
+        }
+
+        function displayResults() {
+            const s = assessmentData.scores, total = assessmentData.totalScore;
+            document.getElementById('totalScore').textContent = total;
+            const pct = total >= 23 ? 90 : total >= 20 ? 75 : total >= 17 ? 60 : total >= 14 ? 40 : 25;
+            document.getElementById('scoreTrend').textContent = `超过全市${pct}%的学生`;
+            document.getElementById('competitiveLevel').textContent = total >= 23 ? 'A' : total >= 20 ? 'B+' : total >= 17 ? 'B' : total >= 14 ? 'C+' : 'C';
+            
+            const dims = { score1: '学业成绩', score2: '综合素养', score3: '学习习惯', score4: '心理素质', score5: '家庭支持' };
+            const vals = Object.values(s);
+            const maxK = Object.keys(s).find(k => s[k] === Math.max(...vals));
+            const minK = Object.keys(s).find(k => s[k] === Math.min(...vals));
+            document.getElementById('strongestDim').textContent = dims[maxK];
+            document.getElementById('weakestDim').textContent = dims[minK];
+            
+            createRadarChart();
+        }
+
+        function createRadarChart() {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            if (radarChart) radarChart.destroy();
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['学业成绩', '综合素养', '学习习惯', '心理素质', '家庭支持'],
+                    datasets: [{
+                        label: '您的孩子',
+                        data: [assessmentData.scores.score1, assessmentData.scores.score2, assessmentData.scores.score3, assessmentData.scores.score4, assessmentData.scores.score5],
+                        fill: true, backgroundColor: 'rgba(102,126,234,0.2)', borderColor: '#667eea', pointBackgroundColor: '#667eea', pointRadius: 5
+                    }]
+                },
+                options: { scales: { r: { beginAtZero: true, max: 5 } } }
+            });
+        }
+
+        function goToStep3() { showStep(3); }
+
+        async function goToStep4() {
+            showStep(4);
+            document.getElementById('schoolRecommendation').innerHTML = '<div class="ai-loading"><div class="ai-loading-spinner"></div><h4>🤖 AI正在生成个性化择校方案...</h4></div>';
+            
+            if (CONFIG.isConnected && !CONFIG.useLocalMode) {
+                try {
+                    const ctx = `综合得分${assessmentData.totalScore}/25,户籍${assessmentData.familyInfo.district},预算${assessmentData.familyInfo.budget},摇号态度${assessmentData.familyInfo.acceptLottery}`;
+                    const aiRec = await callBailianAPI('根据学生情况推荐3-5所西安初中学校，分冲刺、匹配、保底三档，说明推荐理由', ctx);
+                    document.getElementById('schoolRecommendation').innerHTML = `<div class="success-box"><h4>🤖 AI智能推荐</h4><p>${aiRec.replace(/\n/g, '<br>')}</p></div>`;
+                    
+                    const aiAdvice = await callBailianAPI('给出择校决策建议和注意事项', ctx);
+                    document.getElementById('decisionAdvice').innerHTML = `<div class="success-box"><h4>💡 AI决策建议</h4><p>${aiAdvice.replace(/\n/g, '<br>')}</p></div>`;
+                } catch (e) {
+                    generateLocalRecommendation();
+                }
+            } else {
+                generateLocalRecommendation();
+            }
+            renderTimeline();
+        }
+
+        function generateLocalRecommendation() {
+            const total = assessmentData.totalScore;
+            const info = assessmentData.familyInfo;
+            let html = '<div class="success-box"><h4>🎯 基于智能分析的学校推荐</h4>';
+            
+            if (total >= 20) {
+                html += `<p><strong>策略：冲刺型</strong></p>
+                <ul><li><strong>🏫 冲刺：</strong>西安铁一中、西工大附中</li>
+                <li><strong>🎯 匹配：</strong>翱翔中学、辅轮中学</li>
+                <li><strong>✅ 保底：</strong>学区对口公办学校</li></ul>`;
+            } else if (total >= 15) {
+                html += `<p><strong>策略：稳妥型</strong></p>
+                <ul><li><strong>🎯 主攻：</strong>汇知中学、行知中学</li>
+                <li><strong>✅ 稳妥：</strong>区域内优质公办</li></ul>`;
+            } else {
+                html += `<p><strong>策略：保守型</strong></p>
+                <ul><li><strong>✅ 优先：</strong>对口公办学校</li>
+                <li><strong>💡 备选：</strong>关注补录机会</li></ul>`;
+            }
+            html += '</div>';
+            document.getElementById('schoolRecommendation').innerHTML = html;
+            
+            let advice = '<div class="success-box"><h4>🎯 决策建议</h4>';
+            if (total >= 20) advice += '<p>可尝试1-2所热门学校，同时准备保底选择。建议提前了解目标学校往年录取情况。</p>';
+            else if (total >= 15) advice += '<p>重点选择中签率较高的学校，确保有学可上。可适当冲刺1所心仪学校。</p>';
+            else advice += '<p>优先考虑公办学校，确保入学稳定性。利用这段时间提升成绩。</p>';
+            advice += '</div>';
+            document.getElementById('decisionAdvice').innerHTML = advice;
+        }
+
+        function renderTimeline() {
+            const grade = assessmentData.familyInfo.grade;
+            const year = new Date().getFullYear();
+            let html = '<div class="success-box"><h4>⏰ 关键时间规划</h4><ul>';
+            
+            if (grade === '6') {
+                html += `<li><strong>${year}年3月：</strong>关注政策发布，准备材料</li>
+                <li><strong>${year}年4-5月：</strong>民办学校报名，专项复习</li>
+                <li><strong>${year}年6月：</strong>摇号录取，面试准备</li>
+                <li><strong>${year}年7月：</strong>补录机会，确定学校</li>`;
+            } else if (grade === '5') {
+                html += `<li><strong>${year}年9-12月：</strong>系统复习，查漏补缺</li>
+                <li><strong>${year+1}年1-3月：</strong>专项训练，建立错题本</li>
+                <li><strong>${year+1}年4-6月：</strong>模拟测试，培养习惯</li>`;
+            } else {
+                html += `<li><strong>${year}年9月-${year+1}年2月：</strong>培养学习习惯，打好基础</li>
+                <li><strong>${year+1}年3-6月：</strong>广泛阅读，发展兴趣</li>`;
+            }
+            html += '</ul></div>';
+            document.getElementById('timeline').innerHTML = html;
+        }
+
+        function resetAssessment() {
+            if (!confirm('确定要重新开始评估吗？当前结果将丢失。')) return;
+            document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+            document.querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = false);
+            document.querySelectorAll('select').forEach(s => s.value = '');
+            if (radarChart) radarChart.destroy();
+            assessmentData = { scores: {}, familyInfo: {}, totalScore: 0 };
+            showStep(1);
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🎓 西安小升初智能评估系统已加载');
+            showStep(1);
+        });
+    </script>
+</body>
+</html>
