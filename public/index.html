@@ -909,14 +909,30 @@
 
         // 页面加载初始化
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('西安小升初智能评估系统已加载');
-            updateProgressBar(1);
-            
-            // 显示使用说明
-            setTimeout(() => {
-                apiService.showNotification('点击顶部状态栏可配置API信息', 'info');
-            }, 2000);
-        });
+    // 初始化API服务
+    apiService = new BailianAPIService();
+    
+    // 显示配置提示
+    setTimeout(() => {
+        if (!apiService.isConnected) {
+            const chatBody = document.getElementById('chatBody');
+            const welcomeMsg = document.createElement('div');
+            welcomeMsg.className = 'ai-message assistant';
+            welcomeMsg.innerHTML = `
+                <div class="message-avatar">🐱</div>
+                <div class="message-content">
+                    欢迎使用西安小升初智能评估系统！<br><br>
+                    🔧 要使用完整的AI功能，请先配置百炼API：<br>
+                    1. 点击右上角状态指示器<br>
+                    2. 输入API Key和App ID<br>
+                    3. 点击保存并连接<br><br>
+                    或者直接使用本地智能模式咨询问题。
+                </div>
+            `;
+            chatBody.appendChild(welcomeMsg);
+        }
+    }, 1000);
+});
     </script>
 </body>
 </html>
