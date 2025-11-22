@@ -19,32 +19,68 @@
             position: relative;
         }
         .api-status {
-            position: fixed; top: 20px; right: 20px; padding: 10px 15px; border-radius: 8px;
-            font-size: 14px; font-weight: 600; z-index: 1001; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 1001;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             cursor: pointer;
+            background: #ed8936;
+            color: white;
         }
-        .api-status.connected { background: #48bb78; color: white; }
-        .api-status.disconnected { background: #f56565; color: white; }
-        .api-status.local { background: #ed8936; color: white; }
+        
         .config-panel {
-            position: fixed; top: 80px; right: 20px; background: white; border-radius: 12px;
-            padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 1000;
-            max-width: 400px; border: 2px solid #667eea; display: none;
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 1000;
+            max-width: 400px;
+            border: 2px solid #667eea;
+            display: none;
         }
-        .config-panel.show { display: block; }
+        
+        .config-panel.show {
+            display: block;
+        }
+        
         .config-title {
-            font-size: 16px; font-weight: 600; color: #2d3748; margin-bottom: 15px;
-            display: flex; align-items: center; gap: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+        
         .config-input {
-            width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px;
-            margin-bottom: 10px; font-size: 14px;
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
         }
-        .config-input:focus { border-color: #667eea; outline: none; }
+        
         .config-btn {
-            width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white; border: none; border-radius: 8px; cursor: pointer;
-            font-size: 14px; font-weight: 600; margin-bottom: 10px; transition: all 0.3s;
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
         }
         .config-btn:hover {
             transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
@@ -304,7 +340,7 @@
         <i class="fas fa-laptop"></i> 本地智能模式 (点击配置API)
     </div>
 
-    <!-- API配置面板 - 默认隐藏 -->
+    <!-- API配置面板 -->
     <div class="config-panel" id="configPanel">
         <div class="config-title">
             <i class="fas fa-key"></i> 百炼API配置
@@ -312,12 +348,8 @@
         <input type="text" class="config-input" id="apiKeyInput" placeholder="输入API Key (sk-开头)">
         <input type="text" class="config-input" id="appIdInput" placeholder="输入APP ID">
         <input type="text" class="config-input" id="workspaceIdInput" placeholder="输入Workspace ID (可选)">
-        <button class="config-btn" onclick="saveConfig()">
-            保存并连接
-        </button>
-        <button class="config-btn" onclick="useLocalMode()" style="background: #6c757d;">
-            使用本地模式
-        </button>
+        <button class="config-btn" onclick="saveConfig()">保存并连接</button>
+        <button class="config-btn" onclick="useLocalMode()" style="background: #6c757d;">使用本地模式</button>
         <div class="config-help">
             <strong>如何获取：</strong><br>
             1. 登录阿里云百炼控制台<br>
