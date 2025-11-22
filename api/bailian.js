@@ -13,31 +13,28 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { prompt, model = 'qwen-turbo' } = req.body;
+    const { prompt, model = 'qwen-turbo', apiKey, appId } = req.body;
 
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    // 从环境变量获取密钥
-    const BAILIAN_API_KEY = process.env.BAILIAN_API_KEY;
-    const BAILIAN_APP_ID = process.env.BAILIAN_APP_ID;
-    
-    if (!BAILIAN_API_KEY || !BAILIAN_APP_ID) {
-      return res.status(500).json({ 
-        error: 'API configuration missing',
-        message: '请配置BAILIAN_API_KEY和BAILIAN_APP_ID环境变量'
+    // 验证前端传递的API信息
+    if (!apiKey || !appId) {
+      return res.status(400).json({ 
+        error: 'API configuration required',
+        message: '请配置API Key和App ID'
       });
     }
 
-    console.log('调用百炼API...');
+    console.log('通过代理调用百炼API...');
     
     const response = await fetch('https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${BAILIAN_API_KEY}`,
-        'X-DashScope-AppId': BAILIAN_APP_ID
+        'Authorization': `Bearer ${apiKey}`,
+        'X-DashScope-AppId': appId
       },
       body: JSON.stringify({
         model: model,
