@@ -1,9 +1,14 @@
 {
   "name": "xian-xiaoshengchu-assessment",
   "version": "1.0.0",
-  "type": "module",
+  "description": "西安小升初智能评估系统",
   "scripts": {
-    "build": "mkdir -p public && cp index.html public/ || echo 'Build complete'",
-    "vercel-build": "mkdir -p public && cp index.html public/ || echo 'Vercel build complete'"
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  },
+  "devDependencies": {
+    "vercel": "^28.0.0"
   }
 }
