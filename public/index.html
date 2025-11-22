@@ -340,7 +340,7 @@
         <i class="fas fa-laptop"></i> 本地智能模式 (点击配置API)
     </div>
 
-    <!-- API配置面板 -->
+    <!-- API配置面板 - 默认隐藏 -->
     <div class="config-panel" id="configPanel">
         <div class="config-title">
             <i class="fas fa-key"></i> 百炼API配置
@@ -348,8 +348,12 @@
         <input type="text" class="config-input" id="apiKeyInput" placeholder="输入API Key (sk-开头)">
         <input type="text" class="config-input" id="appIdInput" placeholder="输入APP ID">
         <input type="text" class="config-input" id="workspaceIdInput" placeholder="输入Workspace ID (可选)">
-        <button class="config-btn" onclick="saveConfig()">保存并连接</button>
-        <button class="config-btn" onclick="useLocalMode()" style="background: #6c757d;">使用本地模式</button>
+        <button class="config-btn" onclick="saveConfig()">
+            保存并连接
+        </button>
+        <button class="config-btn" onclick="useLocalMode()" style="background: #6c757d;">
+            使用本地模式
+        </button>
         <div class="config-help">
             <strong>如何获取：</strong><br>
             1. 登录阿里云百炼控制台<br>
@@ -420,7 +424,7 @@
             <div class="step" id="step4-indicator" onclick="showStep(4)"><div class="step-number">4</div><div class="step-label">AI推荐</div></div>
         </div>
 
-        <!-- 步骤1: 能力评估 - 修复了维度二的选项 -->
+        <!-- 步骤1: 能力评估 -->
         <div id="step1" class="section active">
             <!-- 维度一: 学业成绩 -->
             <div class="dimension-card">
@@ -435,7 +439,7 @@
                 </div>
             </div>
 
-            <!-- 维度二: 综合素养 - 修复了选项内容 -->
+            <!-- 维度二: 综合素养 -->
             <div class="dimension-card">
                 <div class="dimension-title">🎨 维度二:综合素养</div>
                 <div class="dimension-desc">评估孩子的特长、获奖情况和综合发展水平</div>
@@ -492,7 +496,7 @@
             </div>
         </div>
 
-        <!-- 其他步骤保持不变 -->
+        <!-- 步骤2: 家庭信息 -->
         <div id="step2" class="section">
             <div class="info-section">
                 <h3>📋 家庭基本信息</h3>
@@ -560,7 +564,7 @@
             </div>
         </div>
 
-        <!-- 步骤3和步骤4保持不变 -->
+        <!-- 步骤3: 能力分析 -->
         <div id="step3" class="section">
             <div class="result-card">
                 <div class="result-title">📊 综合能力雷达图</div>
@@ -581,6 +585,7 @@
             </div>
         </div>
 
+        <!-- 步骤4: AI推荐 -->
         <div id="step4" class="section">
             <div class="result-card">
                 <div class="result-title">🏫 AI智能学校推荐</div>
@@ -609,223 +614,205 @@
     </div>
 
     <script>
-        // 修复后的API服务类
-        BailianAPIService
+        // ==================== 配置面板核心功能 ====================
+        console.log('🚀 初始化配置面板功能...');
 
-        function goToStep3() { showStep(3); }
-        
-        function goToStep4() {
-            generateSchoolRecommendation();
-            generateDecisionAdvice();
-            renderTimeline(assessmentData.familyInfo.grade, assessmentData.scores, assessmentData.familyInfo.district);
-            showStep(4);
-        }
-
-        function generateSchoolRecommendation() {
-            const container = document.getElementById('schoolRecommendation');
-            
-            setTimeout(() => {
-                container.innerHTML = getLocalSchoolRecommendation();
-            }, 1500);
-        }
-
-        function generateDecisionAdvice() {
-            const container = document.getElementById('decisionAdvice');
-            
-            setTimeout(() => {
-                container.innerHTML = getLocalDecisionAdvice();
-            }, 1500);
-        }
-
-        function getLocalSchoolRecommendation() {
-            const total = assessmentData.totalScore;
-            const info = assessmentData.familyInfo;
-            
-            let html = '<div class="success-box"><h4>🎯 基于智能分析的学校推荐</h4>';
-            
-            if (total >= 20 && info.acceptLottery === 'yes') {
-                html += `
-                <p><strong>您的策略:冲刺型</strong></p>
-                <div style="margin-left: 20px; margin-top: 10px; line-height: 2;">
-                    <p><strong>🏫 冲刺目标:</strong></p>
-                    <ul>
-                        <li>西安铁一中学 - 理科强势,适合学业优秀的学生</li>
-                        <li>西安交大附中 - 文理均衡,综合实力强</li>
-                    </ul>
-                    
-                    <p><strong>🎯 匹配目标:</strong></p>
-                    <ul>
-                        <li>西安爱知中学 - 素质教育,中签率较高</li>
-                        <li>高新一中沣东中学 - 高新系资源,教学质量保障</li>
-                    </ul>
-                    
-                    <p><strong>✅ 保底选择:</strong></p>
-                    <ul>
-                        <li>您所在区域的公办学校 - 免学费,稳妥选择</li>
-                        <li>民办学校补录机会</li>
-                    </ul>
-                </div>`;
-            } else if (total >= 15 && info.acceptLottery === 'cautious') {
-                html += `
-                <p><strong>您的策略:稳妥型</strong></p>
-                <div style="margin-left: 20px; margin-top: 10px; line-height: 2;">
-                    <p><strong>🎯 主攻目标:</strong></p>
-                    <ul>
-                        <li>西安汇知中学 - 管理严格,学风优良</li>
-                        <li>西安行知中学 - 小班教学,关注个体</li>
-                    </ul>
-                    
-                    <p><strong>✅ 稳妥选择:</strong></p>
-                    <ul>
-                        <li>区域内的优质公办初中</li>
-                        <li>中签率较高的民办学校</li>
-                    </ul>
-                </div>`;
+        // 1. 切换配置面板显示/隐藏
+        function toggleConfigPanel() {
+            console.log('🎯 点击配置面板按钮');
+            const panel = document.getElementById('configPanel');
+            if (panel) {
+                panel.classList.toggle('show');
+                console.log('面板状态:', panel.classList.contains('show') ? '显示' : '隐藏');
             } else {
-                html += `
-                <p><strong>您的策略:保守型</strong></p>
-                <div style="margin-left: 20px; margin-top: 10px; line-height: 2;">
-                    <p><strong>✅ 优先选择:</strong></p>
-                    <ul>
-                        <li>对口公办学校 - 免学费,稳妥可靠</li>
-                        <li>区域内其他公办学校 - 通过学区划分入学</li>
-                    </ul>
-                    
-                    <p><strong>💡 备选方案:</strong></p>
-                    <ul>
-                        <li>关注民办学校补录信息</li>
-                        <li>考虑特色发展学校</li>
-                    </ul>
-                </div>`;
+                console.error('❌ 错误: 找不到配置面板');
+            }
+        }
+
+        // 2. 保存配置
+        function saveConfig() {
+            console.log('💾 保存配置');
+            const apiKey = document.getElementById('apiKeyInput').value;
+            const appId = document.getElementById('appIdInput').value;
+            
+            if (!apiKey || !appId) {
+                alert('请填写API Key和APP ID');
+                return;
             }
             
-            html += '</div>';
-            return html;
+            if (!apiKey.startsWith('sk-')) {
+                alert('API Key应该以"sk-"开头');
+                return;
+            }
+            
+            alert('配置保存成功！');
+            toggleConfigPanel();
         }
 
-        function getLocalDecisionAdvice() {
-            const total = assessmentData.totalScore;
-            const info = assessmentData.familyInfo;
-            
-            let html = '<div class="success-box"><h4>🎯 智能决策建议</h4>';
-            
-            if (total >= 20 && info.acceptLottery === 'yes') {
-                html += '<p><strong>您的策略:冲刺型</strong></p><ul style="margin-left: 20px; margin-top: 10px; line-height: 2;">';
-                html += '<li>报名1所中签率40-50%的热门学校(冲刺)</li>';
-                html += '<li>报名1所中签率60-70%的优质学校(匹配)</li>';
-                html += '<li>准备对口公办或100%录取民办(保底)</li>';
-                html += '<li><strong>预期成功率:</strong>冲刺20-30% | 匹配60% | 保底100%</li></ul>';
-            } else if (total >= 15 && info.acceptLottery === 'cautious') {
-                html += '<p><strong>您的策略:稳妥型</strong></p><ul style="margin-left: 20px; margin-top: 10px; line-height: 2;">';
-                html += '<li>报名1所中签率60-75%的学校(主攻)</li>';
-                html += '<li>报名1所中签率80%以上的学校(保底)</li>';
-                html += '<li>关注对口公办学校(兜底)</li>';
-                html += '<li><strong>预期成功率:</strong>主攻60-75% | 保底80%+</li></ul>';
-            } else {
-                html += '<p><strong>您的策略:保守型</strong></p><ul style="margin-left: 20px; margin-top: 10px; line-height: 2;">';
-                html += '<li>优先考虑对口公办学校</li>';
-                html += '<li>可尝试报名1所中签率80%以上的民办</li>';
-                html += '<li>关注未满额或补录学校</li>';
-                html += '<li><strong>核心原则:</strong>确保有学可上,不冒险</li></ul>';
-            }
-            html += '</div>';
-            
-            return html;
+        // 3. 使用本地模式
+        function useLocalMode() {
+            console.log('🖥️ 使用本地模式');
+            alert('已切换到本地模式');
+            toggleConfigPanel();
         }
 
-        function renderTimeline(grade, scores, district) {
-            const currentYear = new Date().getFullYear();
-            let timeline = [];
-            
-            if (grade === '6') {
-                timeline = [
-                    {
-                        date: `${currentYear}年3月`,
-                        phase: '政策准备期',
-                        tasks: [
-                            { content: '关注教育局官方政策发布,了解最新变化', priority: 'high' },
-                            { content: '收集目标学校招生简章和信息', priority: 'high' },
-                            { content: '准备户籍、学籍等相关证明材料', priority: 'high' }
-                        ]
-                    },
-                    {
-                        date: `${currentYear}年4-5月`,
-                        phase: '能力提升期',
-                        tasks: [
-                            { content: '针对薄弱科目进行专项训练', priority: 'high' },
-                            { content: '完成3-5套模拟试卷,熟悉考试形式', priority: 'high' },
-                            { content: '准备个人简历和特长展示材料', priority: 'medium' }
-                        ]
-                    }
-                ];
-            } else if (grade === '5') {
-                const targetYear = currentYear + 1;
-                timeline = [
-                    {
-                        date: `${currentYear}年9-12月`,
-                        phase: '基础巩固期',
-                        tasks: [
-                            { content: '系统复习四年级知识,查漏补缺', priority: 'high' },
-                            { content: '建立错题本,定期复习巩固', priority: 'high' },
-                            { content: '培养每天阅读30分钟的习惯', priority: 'medium' }
-                        ]
-                    }
-                ];
-            } else {
-                const targetYear = currentYear + 2;
-                timeline = [
-                    {
-                        date: `${currentYear}年9月-${targetYear}年2月`,
-                        phase: '兴趣培养期',
-                        tasks: [
-                            { content: '培养良好的学习习惯和作息', priority: 'high' },
-                            { content: '广泛阅读,提升语文素养', priority: 'medium' },
-                            { content: '打好数学基础,重视计算能力', priority: 'high' }
-                        ]
-                    }
-                ];
-            }
+        // ==================== AI助手功能 ====================
+        function toggleChat() {
+            const chatWindow = document.getElementById('chatWindow');
+            chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex';
+        }
 
-            const timelineContainer = document.getElementById('timeline');
-            let html = '<div class="timeline-enhanced">';
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
             
-            timeline.forEach((item, index) => {
-                html += `
-                <div class="timeline-item-enhanced">
-                    <div class="timeline-marker-enhanced">${index + 1}</div>
-                    <div class="timeline-content-enhanced">
-                        <div class="timeline-date">
-                            <i class="fas fa-calendar-alt"></i>
-                            ${item.date}
-                            <span class="timeline-phase">${item.phase}</span>
-                        </div>
-                        <div class="timeline-tasks">
-                `;
+            if (message) {
+                addMessage(message, 'user');
+                input.value = '';
                 
-                item.tasks.forEach(task => {
-                    const priorityText = task.priority === 'high' ? '重要' : task.priority === 'medium' ? '中等' : '一般';
-                    html += `
-                    <div class="task-item">
-                        <div class="task-icon">
-                            <i class="fas fa-check"></i>
-                        </div>
-                        <div class="task-content">${task.content}</div>
-                        <div class="task-priority priority-${task.priority}">
-                            ${priorityText}
-                        </div>
-                    </div>
-                    `;
-                });
-                
-                html += `
-                        </div>
-                    </div>
-                </div>
-                `;
+                // 模拟AI回复
+                setTimeout(() => {
+                    const responses = {
+                        '推荐学校': '🏫 基于您的需求，我推荐以下学校：西安铁一中、西工大附中、翱翔中学等优质学校。',
+                        '面试准备': '🎯 面试准备建议：准备自我介绍、复习基础知识、整理获奖证书、模拟面试练习。',
+                        '政策解读': '📋 2025年政策：公办学区入学，民办摇号录取，西咸新区纳入西安中考体系。',
+                        '学习计划': '📅 学习计划：每日语文40分钟、数学50分钟、英语30分钟，保证充足休息。'
+                    };
+                    
+                    let response = '感谢您的提问！我可以为您提供学校推荐、面试准备、政策解读等服务。';
+                    for (const [key, value] of Object.entries(responses)) {
+                        if (message.includes(key)) {
+                            response = value;
+                            break;
+                        }
+                    }
+                    
+                    addMessage(response, 'assistant');
+                }, 1000);
+            }
+        }
+
+        function quickAction(action) {
+            document.getElementById('chatInput').value = action;
+            sendMessage();
+        }
+
+        function addMessage(content, role) {
+            const chatBody = document.getElementById('chatBody');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `ai-message ${role}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = role === 'assistant' ? '🐱' : '👤';
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            messageContent.textContent = content;
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(messageContent);
+            chatBody.appendChild(messageDiv);
+            
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        // ==================== 评估系统功能 ====================
+        let assessmentData = { scores: {}, familyInfo: {}, totalScore: 0 };
+        let radarChart;
+
+        // 步骤导航
+        function showStep(stepNumber) {
+            // 更新进度条
+            document.getElementById('progressBar').style.width = `${(stepNumber / 4) * 100}%`;
+            
+            // 隐藏所有步骤
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
             });
             
-            html += '</div>';
-            timelineContainer.innerHTML = html;
+            // 更新步骤指示器
+            for (let i = 1; i <= 4; i++) {
+                const indicator = document.getElementById(`step${i}-indicator`);
+                indicator.classList.remove('active', 'completed');
+                if (i < stepNumber) {
+                    indicator.classList.add('completed');
+                } else if (i === stepNumber) {
+                    indicator.classList.add('active');
+                }
+            }
+            
+            // 显示当前步骤
+            document.getElementById(`step${stepNumber}`).classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function goToStep1() { showStep(1); }
+        
+        function goToStep2() {
+            const scores = ['score1', 'score2', 'score3', 'score4', 'score5'];
+            let missingScores = [];
+            
+            for (let score of scores) {
+                const checked = document.querySelector(`input[name="${score}"]:checked`);
+                if (!checked) {
+                    missingScores.push(score);
+                }
+            }
+            
+            if (missingScores.length > 0) {
+                alert('请完成所有五个维度的评分!\n缺少: ' + missingScores.length + ' 个维度未评分');
+                return;
+            }
+            
+            // 保存评分
+            scores.forEach(score => {
+                const checked = document.querySelector(`input[name="${score}"]:checked`);
+                assessmentData.scores[score] = parseInt(checked.value);
+            });
+            
+            showStep(2);
+        }
+
+        function generateReport() {
+            const requiredFields = ['grade', 'district', 'hasHouse', 'budget', 'motivation', 'acceptLottery'];
+            let missingFields = [];
+            
+            for (let field of requiredFields) {
+                const element = document.getElementById(field);
+                if (!element.value) {
+                    missingFields.push(field);
+                }
+            }
+            
+            if (missingFields.length > 0) {
+                alert('请填写完整的家庭信息!');
+                return;
+            }
+            
+            // 保存家庭信息
+            assessmentData.familyInfo = {
+                grade: document.getElementById('grade').value,
+                district: document.getElementById('district').value,
+                hasHouse: document.getElementById('hasHouse').value,
+                budget: document.getElementById('budget').value,
+                motivation: document.getElementById('motivation').value,
+                acceptLottery: document.getElementById('acceptLottery').value,
+                strengths: Array.from(document.querySelectorAll('.strength-check:checked')).map(cb => cb.value)
+            };
+            
+            // 计算总分
+            assessmentData.totalScore = Object.values(assessmentData.scores).reduce((sum, score) => sum + score, 0);
+            
+            // 显示可视化结果
+            displayVisualResults();
+            showStep(3);
         }
 
         function displayVisualResults() {
@@ -833,33 +820,15 @@
             const total = assessmentData.totalScore;
             
             // 更新总分显示
-            const totalScoreElement = document.getElementById('totalScore');
-            if (totalScoreElement) {
-                totalScoreElement.textContent = total;
-            }
+            document.getElementById('totalScore').textContent = total;
             
             // 更新百分位
             let percentile = total >= 23 ? 90 : total >= 20 ? 75 : total >= 17 ? 60 : total >= 14 ? 40 : 25;
-            const trendElement = document.getElementById('scoreTrend');
-            if (trendElement) {
-                trendElement.textContent = `超过全市${percentile}%的学生`;
-            }
+            document.getElementById('scoreTrend').textContent = `超过全市${percentile}%的学生`;
             
             // 更新竞争力等级
             let level = total >= 23 ? 'A' : total >= 20 ? 'B+' : total >= 17 ? 'B' : total >= 14 ? 'C+' : 'C';
-            const levelElement = document.getElementById('competitiveLevel');
-            if (levelElement) {
-                levelElement.textContent = level;
-            }
-            
-            // 维度名称映射
-            const dimensionNames = {
-                'score1': '学业成绩', 
-                'score2': '综合素养', 
-                'score3': '学习习惯',
-                'score4': '心理素质', 
-                'score5': '家庭支持'
-            };
+            document.getElementById('competitiveLevel').textContent = level;
             
             // 找出最强和最弱维度
             const scoreValues = Object.values(scores);
@@ -868,15 +837,13 @@
             const strongest = Object.keys(scores).find(key => scores[key] === maxScore);
             const weakest = Object.keys(scores).find(key => scores[key] === minScore);
             
-            const strongestElement = document.getElementById('strongestDim');
-            if (strongestElement && strongest) {
-                strongestElement.textContent = dimensionNames[strongest];
-            }
+            const dimensionNames = {
+                'score1': '学业成绩', 'score2': '综合素养', 'score3': '学习习惯',
+                'score4': '心理素质', 'score5': '家庭支持'
+            };
             
-            const weakestElement = document.getElementById('weakestDim');
-            if (weakestElement && weakest) {
-                weakestElement.textContent = dimensionNames[weakest];
-            }
+            document.getElementById('strongestDim').textContent = dimensionNames[strongest];
+            document.getElementById('weakestDim').textContent = dimensionNames[weakest];
             
             // 创建雷达图
             createRadarChart();
@@ -884,17 +851,12 @@
 
         function createRadarChart() {
             const canvas = document.getElementById('radarChart');
-            if (!canvas) return;
-            
             const ctx = canvas.getContext('2d');
-            if (!ctx) return;
+            const scores = assessmentData.scores;
             
-            // 销毁旧图表
             if (radarChart) {
                 radarChart.destroy();
             }
-            
-            const scores = assessmentData.scores;
             
             radarChart = new Chart(ctx, {
                 type: 'radar',
@@ -907,25 +869,122 @@
                         backgroundColor: 'rgba(102, 126, 234, 0.2)',
                         borderColor: 'rgb(102, 126, 234)',
                         pointBackgroundColor: 'rgb(102, 126, 234)',
-                        pointRadius: 5,
-                        pointHoverRadius: 7,
-                        borderWidth: 2
+                        pointRadius: 5
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
                     scales: {
                         r: {
-                            min: 0,
-                            max: 5,
-                            ticks: { 
-                                stepSize: 1
-                            }
+                            beginAtZero: true,
+                            max: 5
                         }
                     }
                 }
             });
+        }
+
+        function goToStep3() { showStep(3); }
+        
+        function goToStep4() {
+            generateSchoolRecommendation();
+            generateDecisionAdvice();
+            renderTimeline();
+            showStep(4);
+        }
+
+        function generateSchoolRecommendation() {
+            const container = document.getElementById('schoolRecommendation');
+            const total = assessmentData.totalScore;
+            const info = assessmentData.familyInfo;
+            
+            let html = '<div class="success-box"><h4>🎯 基于智能分析的学校推荐</h4>';
+            
+            if (total >= 20) {
+                html += `
+                <p><strong>您的策略:冲刺型</strong></p>
+                <ul>
+                    <li><strong>🏫 冲刺目标:</strong> 西安铁一中、西工大附中</li>
+                    <li><strong>🎯 匹配目标:</strong> 翱翔中学、辅轮中学</li>
+                    <li><strong>✅ 保底选择:</strong> 学区对口公办学校</li>
+                </ul>`;
+            } else if (total >= 15) {
+                html += `
+                <p><strong>您的策略:稳妥型</strong></p>
+                <ul>
+                    <li><strong>🎯 主攻目标:</strong> 汇知中学、行知中学</li>
+                    <li><strong>✅ 稳妥选择:</strong> 区域内优质公办</li>
+                </ul>`;
+            } else {
+                html += `
+                <p><strong>您的策略:保守型</strong></p>
+                <ul>
+                    <li><strong>✅ 优先选择:</strong> 对口公办学校</li>
+                    <li><strong>💡 备选方案:</strong> 关注补录机会</li>
+                </ul>`;
+            }
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function generateDecisionAdvice() {
+            const container = document.getElementById('decisionAdvice');
+            const total = assessmentData.totalScore;
+            
+            let html = '<div class="success-box"><h4>🎯 智能决策建议</h4>';
+            
+            if (total >= 20) {
+                html += '<p><strong>冲刺策略:</strong> 可以尝试1-2所热门学校，同时准备保底选择。</p>';
+            } else if (total >= 15) {
+                html += '<p><strong>稳妥策略:</strong> 重点选择中签率较高的学校，确保有学可上。</p>';
+            } else {
+                html += '<p><strong>保守策略:</strong> 优先考虑公办学校，确保入学稳定性。</p>';
+            }
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function renderTimeline() {
+            const container = document.getElementById('timeline');
+            const grade = assessmentData.familyInfo.grade;
+            const currentYear = new Date().getFullYear();
+            
+            let timeline = '';
+            
+            if (grade === '6') {
+                timeline = `
+                <div class="success-box">
+                    <h4>⏰ 六年级关键时间规划</h4>
+                    <ul>
+                        <li><strong>${currentYear}年3月:</strong> 关注政策发布，准备材料</li>
+                        <li><strong>${currentYear}年4-5月:</strong> 民办学校报名，专项复习</li>
+                        <li><strong>${currentYear}年6月:</strong> 摇号录取，面试准备</li>
+                        <li><strong>${currentYear}年7月:</strong> 补录机会，确定学校</li>
+                    </ul>
+                </div>`;
+            } else if (grade === '5') {
+                timeline = `
+                <div class="success-box">
+                    <h4>⏰ 五年级准备规划</h4>
+                    <ul>
+                        <li><strong>${currentYear}年9-12月:</strong> 系统复习，查漏补缺</li>
+                        <li><strong>${currentYear+1}年1-3月:</strong> 专项训练，建立错题本</li>
+                        <li><strong>${currentYear+1}年4-6月:</strong> 模拟测试，培养习惯</li>
+                    </ul>
+                </div>`;
+            } else {
+                timeline = `
+                <div class="success-box">
+                    <h4>⏰ 四年级基础规划</h4>
+                    <ul>
+                        <li><strong>${currentYear}年9月-${currentYear+1}年2月:</strong> 培养学习习惯，打好基础</li>
+                        <li><strong>${currentYear+1}年3-6月:</strong> 广泛阅读，发展兴趣</li>
+                    </ul>
+                </div>`;
+            }
+            
+            container.innerHTML = timeline;
         }
 
         function resetAssessment() {
@@ -941,30 +1000,9 @@
 
         // 页面加载初始化
         document.addEventListener('DOMContentLoaded', function() {
-    // 初始化API服务
-    apiService = new BailianAPIService();
-    
-    // 显示配置提示
-    setTimeout(() => {
-        if (!apiService.isConnected) {
-            const chatBody = document.getElementById('chatBody');
-            const welcomeMsg = document.createElement('div');
-            welcomeMsg.className = 'ai-message assistant';
-            welcomeMsg.innerHTML = `
-                <div class="message-avatar">🐱</div>
-                <div class="message-content">
-                    欢迎使用西安小升初智能评估系统！<br><br>
-                    🔧 要使用完整的AI功能，请先配置百炼API：<br>
-                    1. 点击右上角状态指示器<br>
-                    2. 输入API Key和App ID<br>
-                    3. 点击保存并连接<br><br>
-                    或者直接使用本地智能模式咨询问题。
-                </div>
-            `;
-            chatBody.appendChild(welcomeMsg);
-        }
-    }, 1000);
-});
+            console.log('🎓 西安小升初智能评估系统已加载');
+            showStep(1);
+        });
     </script>
 </body>
 </html>
