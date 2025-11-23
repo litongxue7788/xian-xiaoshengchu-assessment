@@ -19,8 +19,8 @@
 
 ## 🌐 在线访问
 
-部署地址：https://xian-xiaoshengchu.vercel.app](https://xian-xiaoshengchu-assessment.vercel.app/
-
+部署地址：[https://xian-xiaoshengchu.vercel.app](https://xian-xiaoshengchu-assessment.vercel.app/
+](https://xian-xiaoshengchu-assessment.vercel.app/)
 ## 📄 使用说明
 
 1. 填写学生能力评估
