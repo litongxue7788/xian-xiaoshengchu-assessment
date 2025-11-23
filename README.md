@@ -19,7 +19,7 @@
 
 ## 🌐 在线访问
 
-部署地址：https://xian-xiaoshengchu.vercel.app
+部署地址：https://xian-xiaoshengchu.vercel.app](https://xian-xiaoshengchu-assessment.vercel.app/
 
 ## 📄 使用说明
 
