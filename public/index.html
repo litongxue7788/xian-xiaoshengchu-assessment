@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> <!-- 修复：添加关键视口meta标签 -->
     <title>西安小升初智能评估系统 2025增强版</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -33,8 +33,8 @@
         .ai-assistant-btn:hover { transform: scale(1.1); }
         .ai-chat-window { 
             position: fixed; 
-            bottom: 100px; 
-            right: 30px; 
+            bottom: 100px; /* 修复：初始位置在右下角 */
+            right: 30px;   /* 修复：初始位置在右下角 */
             width: 380px; 
             height: 520px; 
             background: white; 
@@ -62,7 +62,7 @@
         .ai-message.user .message-content { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-bottom-right-radius: 4px; }
         .ai-chat-input { padding: 15px; border-top: 1px solid #e2e8f0; background: white; }
         .chat-input-group { display: flex; gap: 10px; }
-        .chat-input { flex: 1; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 25px; outline: none; font-size: 14px; }
+        .chat-input { flex: 1; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 25px; outline: none; font-size: 16px; /* 修复：移动端输入框字体大小 */ }
         .chat-input:focus { border-color: #667eea; }
         .send-btn { width: 40px; height: 40px; border: none; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .send-btn:disabled { background: #ccc; }
@@ -188,10 +188,11 @@
             .stats-grid { grid-template-columns: 1fr; }
             .button-group { flex-direction: column; }
             .btn { width: 100%; justify-content: center; }
-            .ai-chat-window { width: 300px; height: 400px; right: -20px; }
-            .config-panel { max-width: 90%; right: 5%; left: 5%; }
+            .ai-chat-window { width: 300px; height: 400px; right: 10px; left: 10px; bottom: 10px; top: 10px; } /* 修复：移动端聊天窗口样式 */
+            .config-panel { max-width: 90%; right: 5%; left: 5%; top: 50px; } /* 修复：移动端配置面板样式 */
             .location-grid { grid-template-columns: 1fr; }
             .step-label { font-size: 11px; }
+            .ai-assistant-btn { width: 50px; height: 50px; font-size: 24px; bottom: 20px; right: 20px; } /* 修复：移动端助手按钮样式 */
         }
     </style>
 </head>
@@ -637,18 +638,16 @@
 const CONFIG = { apiKey: '', appId: '', isConnected: false };
 let assessmentData = { scores: {}, familyInfo: {}, totalScore: 0 };
 let radarChart = null;
-let isDragging = false; // 用于标记是否正在拖拽
-let dragOffsetX = 0;   // 鼠标按下时距离窗口左边界的偏移
-let dragOffsetY = 0;   // 鼠标按下时距离窗口上边界的偏移
-let dragStartX = 0;    // 鼠标按下时的屏幕X坐标
-let dragStartY = 0;    // 鼠标按下时的屏幕Y坐标
+let isDragging = false;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent); // 检测移动设备
 
 // 权重配置
 const DIMENSION_WEIGHTS = {
     score1: 0.30, score2: 0.15, score3: 0.25, 
     score4: 0.10, score5: 0.10, score6: 0.10
 };
-
 // 西安市街道数据 - 完善西咸新区街道
 const DISTRICT_STREETS = {
     '雁塔区': ['小寨路街道', '长延堡街道', '大雁塔街道', '电子城街道', '等驾坡街道', '曲江街道'],
@@ -677,7 +676,6 @@ const DISTRICT_STREETS = {
     ],
     '外地户籍': ['其他街道']
 };
-
 // 西咸新区各新城对应的学校数据
 const XIANYANG_SCHOOLS = {
     '秦汉新城': [
@@ -701,7 +699,6 @@ const XIANYANG_SCHOOLS = {
         { name: '钓台街道中学', type: '公办', feature: '社区配套学校，就近便利', match: '中' }
     ]
 };
-
 // 根据街道判断所属新城
 function getXianyangAreaByStreet(street) {
     const areaMapping = {
@@ -721,7 +718,6 @@ function getXianyangAreaByStreet(street) {
     };
     return areaMapping[street] || null;
 }
-
 // 初始化街道选择
 function initStreetSelects() {
     const districts = ['householdDistrict', 'residenceDistrict'];
@@ -742,7 +738,6 @@ function initStreetSelects() {
         });
     });
 }
-
 // 监听居住信息变化，自动更新匹配情况
 function initResidenceListeners() {
     const householdDistrict = document.getElementById('householdDistrict');
@@ -757,7 +752,6 @@ function initResidenceListeners() {
         });
     });
 }
-
 // 更新入学顺位评估
 function updateAdmissionPriority() {
     const hasHouse = document.getElementById('hasHouse').value;
@@ -781,14 +775,20 @@ function updateAdmissionPriority() {
     document.getElementById('admissionPriority').textContent = priority;
     document.getElementById('priorityReason').textContent = reason;
 }
-
 // ========== API配置功能 ==========
 function toggleConfigPanel() { 
     const panel = document.getElementById('configPanel');
     panel.classList.toggle('show');
 }
-
-async function saveAndTestConfig() {
+function useLocalMode() {
+    CONFIG.isConnected = false;
+    CONFIG.apiKey = ''; // 修复：重置API Key
+    CONFIG.appId = '';  // 修复：重置App ID
+    updateApiStatusUI(false);
+    alert('已切换到本地模式'); // 修复：显示切换成功提示
+    toggleConfigPanel(); // 修复：自动关闭配置面板
+}
+function saveAndTestConfig() {
     const apiKey = document.getElementById('apiKeyInput').value.trim();
     const appId = document.getElementById('appIdInput').value.trim();
     const statusEl = document.getElementById('configStatus');
@@ -807,9 +807,35 @@ async function saveAndTestConfig() {
     CONFIG.apiKey = apiKey; 
     CONFIG.appId = appId;
     try {
-        // 修复：使用全局CONFIG对象中的值，而不是传入参数
-        const response = await callBailianAPI("测试连接");
-        if (response && response.output && response.output.text) {
+        // 真实API测试
+        const response = callBailianAPI("测试连接", CONFIG.appId, CONFIG.apiKey); // 修复：改为同步调用或处理异步
+        // 由于同步调用API不现实，这里改为异步测试
+        testAPIConnection(apiKey, appId, statusEl);
+    } catch (e) {
+        statusEl.className = 'config-status error'; 
+        statusEl.textContent = '连接失败: ' + e.message;
+    }
+}
+async function testAPIConnection(apiKey, appId, statusEl) {
+    try {
+        const response = await fetch('https://dashscope.aliyuncs.com/api/v1/apps/' + appId + '/completion', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + apiKey,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                input: {
+                    prompt: "测试连接"
+                },
+                parameters: {}
+            })
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        const data = await response.json();
+        if (data && data.output && data.output.text) {
             CONFIG.isConnected = true;
             statusEl.className = 'config-status success'; 
             statusEl.textContent = '✅ 连接成功';
@@ -823,13 +849,6 @@ async function saveAndTestConfig() {
         statusEl.textContent = '连接失败: ' + e.message;
     }
 }
-
-function useLocalMode() {
-    CONFIG.isConnected = false;
-    updateApiStatusUI(false);
-    toggleConfigPanel();
-}
-
 function updateApiStatusUI(connected) {
     const el = document.getElementById('apiStatus');
     const txt = document.getElementById('statusText');
@@ -844,17 +863,16 @@ function updateApiStatusUI(connected) {
         chat.textContent = '本地模式'; 
     }
 }
-
-// ========== 修复：阿里云百炼API调用 ==========
-async function callBailianAPI(prompt) { // 修复：只接收一个参数
-    if (!CONFIG.isConnected || !CONFIG.apiKey || !CONFIG.appId) { // 添加检查
+// ========== 阿里云百炼API调用 ==========
+async function callBailianAPI(prompt, appId, apiKey) {
+    if (!CONFIG.isConnected) {
         return { output: { text: getLocalResponse(prompt) } };
     }
     try {
-        const response = await fetch('https://dashscope.aliyuncs.com/api/v1/apps/' + CONFIG.appId + '/completion', {
+        const response = await fetch('https://dashscope.aliyuncs.com/api/v1/apps/' + appId + '/completion', {
             method: 'POST',
             headers: {
-                'Authorization': 'Bearer ' + CONFIG.apiKey, // 使用全局CONFIG
+                'Authorization': 'Bearer ' + apiKey,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
@@ -875,46 +893,70 @@ async function callBailianAPI(prompt) { // 修复：只接收一个参数
         return { output: { text: getLocalResponse(prompt) } };
     }
 }
-
 // ========== AI聊天功能 ==========
 function toggleChat() { 
     const chatWindow = document.getElementById('chatWindow');
     chatWindow.classList.toggle('active');
     if (chatWindow.classList.contains('active')) {
-        initChatDrag(); // 初始化拖拽功能
+        resetChatWindowPosition(); // 修复：打开时重置位置
+        initChatDrag(); // 修复：只在打开时初始化拖拽
     }
 }
-
-// ========== 修复：初始化拖拽功能 ==========
+// 修复：重置聊天窗口位置
+function resetChatWindowPosition() {
+    const chatWindow = document.getElementById('chatWindow');
+    if (isMobile) {
+        // 移动端固定在屏幕中央
+        chatWindow.style.top = '10px';
+        chatWindow.style.left = '10px';
+        chatWindow.style.right = '10px';
+        chatWindow.style.bottom = '10px';
+        chatWindow.style.width = 'auto';
+        chatWindow.style.height = 'auto';
+    } else {
+        // 桌面端重置到右下角
+        chatWindow.style.top = 'auto';
+        chatWindow.style.left = 'auto';
+        chatWindow.style.right = '30px';
+        chatWindow.style.bottom = '100px';
+        chatWindow.style.width = '380px';
+        chatWindow.style.height = '520px';
+    }
+}
+// 修复：初始化拖拽功能
 function initChatDrag() {
     const chatHeader = document.getElementById('chatHeader');
     const chatWindow = document.getElementById('chatWindow');
-
     if (!chatHeader || !chatWindow) {
         console.error("Chat header or window element not found!");
         return;
     }
 
-    chatHeader.addEventListener('mousedown', startDrag);
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', stopDrag);
+    // 修复：移除之前的事件监听器（防止重复绑定）
+    if (chatHeader._dragEvents) {
+        const { mousedown, mousemove, mouseup, touchstart, touchmove, touchend } = chatHeader._dragEvents;
+        document.removeEventListener('mousedown', mousedown);
+        document.removeEventListener('mousemove', mousemove);
+        document.removeEventListener('mouseup', mouseup);
+        document.removeEventListener('touchstart', touchstart);
+        document.removeEventListener('touchmove', touchmove);
+        document.removeEventListener('touchend', touchend);
+    }
 
-    function startDrag(e) {
+    const startDrag = (e) => {
         if (e.target !== chatHeader && !chatHeader.contains(e.target)) return; // 确保点击在标题栏上
         isDragging = true;
         const rect = chatWindow.getBoundingClientRect();
-        dragOffsetX = e.clientX - rect.left;
-        dragOffsetY = e.clientY - rect.top;
-        dragStartX = e.clientX;
-        dragStartY = e.clientY;
+        dragOffsetX = (e.clientX || e.touches[0].clientX) - rect.left;
+        dragOffsetY = (e.clientY || e.touches[0].clientY) - rect.top;
         chatWindow.style.cursor = 'grabbing';
         e.preventDefault(); // 防止选中文本
-    }
+    };
 
-    function drag(e) {
+    const drag = (e) => {
         if (!isDragging) return;
-        const x = e.clientX - dragOffsetX;
-        const y = e.clientY - dragOffsetY;
+        const x = (e.clientX || e.touches[0].clientX) - dragOffsetX;
+        const y = (e.clientY || e.touches[0].clientY) - dragOffsetY;
         // 限制在视口内
         const maxX = window.innerWidth - chatWindow.offsetWidth;
         const maxY = window.innerHeight - chatWindow.offsetHeight;
@@ -924,18 +966,45 @@ function initChatDrag() {
         chatWindow.style.top = clampedY + 'px';
         chatWindow.style.right = 'auto';
         chatWindow.style.bottom = 'auto';
-    }
+    };
 
-    function stopDrag() {
+    const stopDrag = () => {
         isDragging = false;
         chatWindow.style.cursor = 'default';
-    }
+    };
+
+    // 添加鼠标事件
+    const mousedownHandler = startDrag;
+    const mousemoveHandler = drag;
+    const mouseupHandler = stopDrag;
+
+    // 添加触摸事件
+    const touchstartHandler = startDrag;
+    const touchmoveHandler = drag;
+    const touchendHandler = stopDrag;
+
+    chatHeader.addEventListener('mousedown', mousedownHandler);
+    document.addEventListener('mousemove', mousemoveHandler);
+    document.addEventListener('mouseup', mouseupHandler);
+
+    chatHeader.addEventListener('touchstart', touchstartHandler);
+    document.addEventListener('touchmove', touchmoveHandler);
+    document.addEventListener('touchend', touchendHandler);
+
+    // 修复：存储事件处理器引用，以便后续移除
+    chatHeader._dragEvents = {
+        mousedown: mousedownHandler,
+        mousemove: mousemoveHandler,
+        mouseup: mouseupHandler,
+        touchstart: touchstartHandler,
+        touchmove: touchmoveHandler,
+        touchend: touchendHandler
+    };
 }
 
 function handleKeyPress(e) { 
     if (e.key === 'Enter') sendMessage(); 
 }
-
 async function sendMessage() {
     const input = document.getElementById('chatInput');
     const msg = input.value.trim();
@@ -947,8 +1016,7 @@ async function sendMessage() {
     try {
         let resp;
         if (CONFIG.isConnected) {
-            // 修复：调用时只传入一个参数
-            const response = await callBailianAPI(msg);
+            const response = await callBailianAPI(msg, CONFIG.appId, CONFIG.apiKey);
             resp = response.output.text;
         } else {
             resp = getLocalResponse(msg);
@@ -961,12 +1029,10 @@ async function sendMessage() {
     }
     document.getElementById('sendBtn').disabled = false;
 }
-
 function quickAction(q) { 
     document.getElementById('chatInput').value = q; 
     sendMessage(); 
 }
-
 function addMessage(content, role) {
     const body = document.getElementById('chatBody');
     const div = document.createElement('div');
@@ -976,7 +1042,6 @@ function addMessage(content, role) {
     body.appendChild(div); 
     body.scrollTop = body.scrollHeight;
 }
-
 function showTyping() {
     const body = document.getElementById('chatBody');
     const div = document.createElement('div');
@@ -993,12 +1058,10 @@ function showTyping() {
     body.appendChild(div);
     body.scrollTop = body.scrollHeight;
 }
-
 function removeTyping() {
     const indicator = document.getElementById('typingIndicator');
     if (indicator) indicator.remove();
 }
-
 function getLocalResponse(msg) {
     const lowerMsg = msg.toLowerCase();
     if (lowerMsg.includes('时间') || lowerMsg.includes('安排')) {
@@ -1047,23 +1110,28 @@ function getLocalResponse(msg) {
 您可以继续提问关于时间安排、民办学校、摇号政策等问题哦~`;
     }
 }
-
 // ========== 步骤导航功能 ==========
 function showStep(n) {
-    document.getElementById('progressBar').style.width = `${(n/6)*100}%`;
+    if (typeof n !== 'number' || n < 1 || n > 6) return; // 修复：添加步骤号验证
+    const progressBar = document.getElementById('progressBar');
+    const section = document.getElementById(`step${n}`);
+    const indicator = document.getElementById(`step${n}-indicator`);
+    if (!progressBar || !section || !indicator) return; // 修复：添加元素存在性检查
+
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     for (let i = 1; i <= 6; i++) {
         const ind = document.getElementById(`step${i}-indicator`);
-        ind.classList.remove('active', 'completed');
-        if (i < n) ind.classList.add('completed');
-        else if (i === n) ind.classList.add('active');
+        if (ind) { // 修复：添加元素存在性检查
+            ind.classList.remove('active', 'completed');
+            if (i < n) ind.classList.add('completed');
+            else if (i === n) ind.classList.add('active');
+        }
     }
-    document.getElementById(`step${n}`).classList.add('active');
+    section.classList.add('active');
+    progressBar.style.width = `${(n/6)*100}%`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
 function goToStep1() { showStep(1); }
-
 function goToStep2() { 
     for (let i = 1; i <= 6; i++) {
         if (!document.querySelector(`input[name="score${i}"]:checked`)) { 
@@ -1075,67 +1143,63 @@ function goToStep2() {
     }
     showStep(2); 
 }
-
 function goToStep3() { 
     const fields = ['householdDistrict', 'residenceDistrict', 'residenceType'];
     for (const f of fields) { 
-        if (!document.getElementById(f).value) { alert('请填写完整信息'); return; } 
+        if (!document.getElementById(f)?.value) { alert('请填写完整信息'); return; } // 修复：添加元素存在性检查
     }
     showStep(3); 
 }
-
 function goToStep4() { 
     const fields = ['hasHouse', 'propertyType', 'propertyYears'];
     for (const f of fields) { 
-        if (!document.getElementById(f).value) { alert('请填写完整信息'); return; } 
+        if (!document.getElementById(f)?.value) { alert('请填写完整信息'); return; } // 修复：添加元素存在性检查
     }
     showStep(4); 
 }
-
 function goToStep5() { 
     const fields = ['considerPrivate', 'crossDistrictPreference', 'budget', 'acceptLottery'];
     for (const f of fields) { 
-        if (!document.getElementById(f).value) { alert('请填写完整信息'); return; } 
+        if (!document.getElementById(f)?.value) { alert('请填写完整信息'); return; } // 修复：添加元素存在性检查
     }
     showStep(5); 
 }
-
 // ========== 生成报告功能 ==========
 function generateReport() {
     const fields = ['academicGoals', 'specificNeeds', 'riskTolerance', 'timeCommitment'];
     for (const f of fields) { 
-        if (!document.getElementById(f).value) { alert('请填写完整信息'); return; } 
+        if (!document.getElementById(f)?.value) { alert('请填写完整信息'); return; } // 修复：添加元素存在性检查
     }
     // 收集所有信息
     assessmentData.familyInfo = {
         // 户籍信息
-        householdDistrict: document.getElementById('householdDistrict').value,
-        householdStreet: document.getElementById('householdStreet').value,
-        householdAddress: document.getElementById('householdAddress').value,
+        householdDistrict: document.getElementById('householdDistrict')?.value || '',
+        householdStreet: document.getElementById('householdStreet')?.value || '',
+        householdAddress: document.getElementById('householdAddress')?.value || '',
         // 居住信息
-        residenceDistrict: document.getElementById('residenceDistrict').value,
-        residenceStreet: document.getElementById('residenceStreet').value,
-        residenceAddress: document.getElementById('residenceAddress').value,
-        residenceType: document.getElementById('residenceType').value,
+        residenceDistrict: document.getElementById('residenceDistrict')?.value || '',
+        residenceStreet: document.getElementById('residenceStreet')?.value || '',
+        residenceAddress: document.getElementById('residenceAddress')?.value || '',
+        residenceType: document.getElementById('residenceType')?.value || '',
         // 匹配情况
-        sameDistrict: document.getElementById('sameDistrict').checked,
-        sameStreet: document.getElementById('sameStreet').checked,
-        inSchoolDistrict: document.getElementById('inSchoolDistrict').checked,
+        sameDistrict: document.getElementById('sameDistrict')?.checked || false,
+        sameStreet: document.getElementById('sameStreet')?.checked || false,
+        inSchoolDistrict: document.getElementById('inSchoolDistrict')?.checked || false,
         // 房产信息
-        hasHouse: document.getElementById('hasHouse').value,
-        propertyType: document.getElementById('propertyType').value,
-        propertyYears: document.getElementById('propertyYears').value,
+        hasHouse: document.getElementById('hasHouse')?.value || '',
+        propertyType: document.getElementById('propertyType')?.value || '',
+        propertyYears: document.getElementById('propertyYears')?.value || '',
         // 民办意向
-        considerPrivate: document.getElementById('considerPrivate').value,
-        crossDistrictPreference: document.getElementById('crossDistrictPreference').value,
-        budget: document.getElementById('budget').value,
-        acceptLottery: document.getElementById('acceptLottery').value,
+        considerPrivate: document.getElementById('considerPrivate')?.value || '',
+        crossDistrictPreference: document.getElementById('crossDistrictPreference')?.value || '',
+        budget: document.getElementById('budget')?.value || '',
+        acceptLottery: document.getElementById('acceptLottery')?.value || '',
         strengths: Array.from(document.querySelectorAll('.strength-check:checked')).map(c => c.value),
         // 深度需求
-        academicGoals: document.getElementById('academicGoals').value,
-        specificNeeds: document.getElementById('specificNeeds').value,
-        riskTolerance: document.getElementById('riskTolerance').value,
-        timeCommitment: document.getElementById('timeCommitment').value,
+        academicGoals: document.getElementById('academicGoals')?.value || '',
+        specificNeeds: document.getElementById('specificNeeds')?.value || '',
+        riskTolerance: document.getElementById('riskTolerance')?.value || '',
+        timeCommitment: document.getElementById('timeCommitment')?.value || '',
         educationalPhilosophy: Array.from(document.querySelectorAll('.philosophy-check:checked')).map(c => c.value)
     };
     // 计算总分
@@ -1143,7 +1207,6 @@ function generateReport() {
     displayResults();
     showStep(6);
 }
-
 function calculateWeightedTotalScore(scores) {
     let weightedTotal = 0;
     for (const [key, value] of Object.entries(scores)) {
@@ -1151,7 +1214,6 @@ function calculateWeightedTotalScore(scores) {
     }
     return Math.round(weightedTotal * 100) / 100;
 }
-
 function displayResults() {
     // 生成学校推荐
     generateSchoolRecommendation();
@@ -1160,10 +1222,10 @@ function displayResults() {
     // 生成政策建议
     generatePolicyAdvice();
 }
-
 async function generateSchoolRecommendation() {
     const { scores, familyInfo, totalScore } = assessmentData;
     const recommendationEl = document.getElementById('schoolRecommendation');
+    if (!recommendationEl) return; // 修复：添加元素存在性检查
     let html = `<div class="stats-grid">
         <div class="stat-card">
             <div class="stat-label">综合得分</div>
@@ -1172,7 +1234,7 @@ async function generateSchoolRecommendation() {
         </div>
         <div class="stat-card">
             <div class="stat-label">入学顺位</div>
-            <div class="stat-value">${document.getElementById('admissionPriority').textContent}</div>
+            <div class="stat-value">${document.getElementById('admissionPriority')?.textContent || '待评估'}</div>
             <div class="stat-trend">基于户籍居住匹配</div>
         </div>
         <div class="stat-card">
@@ -1214,14 +1276,13 @@ async function generateSchoolRecommendation() {
 学生综合得分：${totalScore}/5.0
 户籍区域：${familyInfo.householdDistrict}
 居住区域：${familyInfo.residenceDistrict}
-入学顺位：${document.getElementById('admissionPriority').textContent}
+入学顺位：${document.getElementById('admissionPriority')?.textContent || '待评估'}
 是否考虑民办：${familyInfo.considerPrivate}
 学生特长：${familyInfo.strengths.join(', ')}
 学业规划：${familyInfo.academicGoals}
 特殊需求：${familyInfo.specificNeeds}
 请提供冲刺推荐、匹配推荐和保底推荐三个层次的学校建议，每层次2-3所学校，并说明推荐理由。`;
-            // 修复：调用时只传入一个参数
-            const response = await callBailianAPI(prompt);
+            const response = await callBailianAPI(prompt, CONFIG.appId, CONFIG.apiKey);
             const aiRecommendation = response.output.text;
             html += `<div class="public-match-card">
                 <div class="public-match-header">
@@ -1244,7 +1305,6 @@ async function generateSchoolRecommendation() {
     }
     recommendationEl.innerHTML = html;
 }
-
 function getLocalSchoolRecommendation(familyInfo, totalScore) {
     return `
     <div class="public-match-card">
@@ -1264,7 +1324,7 @@ function getLocalSchoolRecommendation(familyInfo, totalScore) {
         </div>
         <div class="public-match-desc">
             <strong>西安益新中学</strong> - 民办，管理规范，适合稳定发展学生<br>
-            <strong>${familyInfo.residenceDistrict}第一学校</strong> - 公办，就近入学，交通便利
+            <strong>${familyInfo.residenceDistrict || '本区'}第一学校</strong> - 公办，就近入学，交通便利
         </div>
     </div>
     <div class="public-match-card">
@@ -1273,15 +1333,15 @@ function getLocalSchoolRecommendation(familyInfo, totalScore) {
             <span class="match-indicator match-low">稳妥选择</span>
         </div>
         <div class="public-match-desc">
-            <strong>${familyInfo.residenceDistrict}实验中学</strong> - 公办，学区保障，入学确定性强<br>
+            <strong>${familyInfo.residenceDistrict || '本区'}实验中学</strong> - 公办，学区保障，入学确定性强<br>
             <strong>周边民办学校</strong> - 摇号概率较高，作为备选方案
         </div>
     </div>`;
 }
-
 function generateTimeline() {
-    const currentYear = new Date().getFullYear();
     const timelineEl = document.getElementById('timeline');
+    if (!timelineEl) return; // 修复：添加元素存在性检查
+    const currentYear = new Date().getFullYear();
     timelineEl.innerHTML = `
         <div class="timeline-item">
             <div class="timeline-date">${currentYear}年11月-${currentYear+1}年2月</div>
@@ -1309,10 +1369,10 @@ function generateTimeline() {
         </div>
     `;
 }
-
 function generatePolicyAdvice() {
-    const { familyInfo } = assessmentData;
     const adviceEl = document.getElementById('policyAdvice');
+    if (!adviceEl) return; // 修复：添加元素存在性检查
+    const { familyInfo } = assessmentData;
     let advice = '';
     if (familyInfo.sameDistrict) {
         advice += `<div class="policy-box">
@@ -1337,20 +1397,17 @@ function generatePolicyAdvice() {
     </div>`;
     adviceEl.innerHTML = advice;
 }
-
 function getScoreLevel(score) {
     if (score >= 4.0) return '优秀';
     if (score >= 3.5) return '良好';
     if (score >= 3.0) return '中等';
     return '待提升';
 }
-
 function getSchoolType(score, familyInfo) {
     if (score >= 4.0 && familyInfo.considerPrivate === 'yes') return '优质民办';
     if (score >= 3.5) return '公办+民办';
     return '公办为主';
 }
-
 function resetAll() {
     if (!confirm('确定重新评估吗？所有数据将被清空。')) return;
     document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
@@ -1361,22 +1418,21 @@ function resetAll() {
     assessmentData = { scores: {}, familyInfo: {}, totalScore: 0 };
     showStep(1);
 }
-
 // 初始化
 document.addEventListener('DOMContentLoaded', function() {
     showStep(1);
     initStreetSelects();
     initResidenceListeners();
     // 设置默认值
-    document.getElementById('academicGoals').value = '稳定升入普通高中';
-    document.getElementById('specificNeeds').value = '需要住校或晚托服务';
-    document.getElementById('riskTolerance').value = '偏好稳妥可靠的选择';
-    document.getElementById('timeCommitment').value = '周末可集中陪伴';
+    document.getElementById('academicGoals')?.value = '稳定升入普通高中';
+    document.getElementById('specificNeeds')?.value = '需要住校或晚托服务';
+    document.getElementById('riskTolerance')?.value = '偏好稳妥可靠的选择';
+    document.getElementById('timeCommitment')?.value = '周末可集中陪伴';
     // 设置默认勾选
     document.querySelectorAll('.philosophy-check').forEach(check => check.checked = true);
     // 监听房产信息变化
-    document.getElementById('hasHouse').addEventListener('change', updateAdmissionPriority);
-    document.getElementById('residenceType').addEventListener('change', updateAdmissionPriority);
+    document.getElementById('hasHouse')?.addEventListener('change', updateAdmissionPriority);
+    document.getElementById('residenceType')?.addEventListener('change', updateAdmissionPriority);
 });
 </script>
 </body>
