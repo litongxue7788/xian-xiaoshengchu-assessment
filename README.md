@@ -1,3 +1,6 @@
+好的，这是为您修改和完善后的 `README.md` 内容：
+
+```markdown
 # 西安小升初智能评估系统
 
 基于AI技术的智能小升初评估和升学规划系统，为西安地区学生和家长提供个性化建议。
@@ -32,14 +35,16 @@
 
 ## 📁 项目结构
 
+```
 xian-xiaoshengchu-assessment/
-├── index.html # 主页面及核心逻辑
-├── content/ # 内容资源目录
-│ └── knowledge_base.json # 动态内容知识库 (FAQ, 学校信息等)
-├── README.md # 项目说明 (此文件)
-├── vercel.json # Vercel 部署配置
-├── .gitignore # Git 忽略文件配置
-└── package.json # 项目配置 (可选)
+├── index.html                 # 主页面及核心逻辑
+├── content/                   # 内容资源目录
+│   └── knowledge_base.json    # 动态内容知识库 (FAQ, 学校信息等)
+├── README.md                  # 项目说明 (此文件)
+├── vercel.json              # Vercel 部署配置
+├── .gitignore               # Git 忽略文件配置
+└── package.json             # 项目配置 (可选)
+```
 
 ## 🎯 核心功能
 
@@ -64,30 +69,44 @@ xian-xiaoshengchu-assessment/
 ```bash
 git clone https://github.com/litongxue7788/xian-xiaoshengchu-assessment.git
 cd xian-xiaoshengchu-assessment
-部署到 Vercel
-将项目推送至您的 GitHub 账户。
-访问 Vercel 并使用 GitHub 账户登录。
-在 Vercel 仪表板中点击 "New Project"，导入您刚刚创建的 GitHub 仓库。
-Vercel 会自动检测并完成部署。
-配置 AI 功能（可选）
-获取 阿里云百炼 的 API Key 和 APP ID。
-部署完成后，访问网站，在右上角点击 "本地模式" 按钮。
-输入 API Key 和 APP ID，点击 "保存并测试"。
-测试成功后，系统将启用 AI 智能推荐功能。
-📋 系统要求
-浏览器: 现代浏览器（Chrome, Firefox, Safari, Edge）
-JavaScript: 需要启用 JavaScript
-网络: 访问网站需要网络连接，AI功能需要额外的网络请求
-🤝 贡献指南
+```
+
+### 部署到 Vercel
+
+1.  将项目推送至您的 GitHub 账户。
+2.  访问 [Vercel](https://vercel.com/) 并使用 GitHub 账户登录。
+3.  在 Vercel 仪表板中点击 "New Project"，导入您刚刚创建的 GitHub 仓库。
+4.  Vercel 会自动检测并完成部署。
+
+### 配置 AI 功能（可选）
+
+1.  获取 [阿里云百炼](https://bailian.console.aliyun.com/) 的 API Key 和 APP ID。
+2.  部署完成后，访问网站，在右上角点击 "本地模式" 按钮。
+3.  输入 API Key 和 APP ID，点击 "保存并测试"。
+4.  测试成功后，系统将启用 AI 智能推荐功能。
+
+## 📋 系统要求
+
+*   **浏览器**: 现代浏览器（Chrome, Firefox, Safari, Edge）
+*   **JavaScript**: 需要启用 JavaScript
+*   **网络**: 访问网站需要网络连接，AI功能需要额外的网络请求
+
+## 🤝 贡献指南
+
 欢迎提交 Issue 和 Pull Request 来改进项目。
 
-📄 许可证
+## 📄 许可证
+
 MIT License
 
-📞 联系我们
+## 📞 联系我们
+
 如有问题，请通过 GitHub Issues 反馈。
 
+---
+
 让AI技术为每个孩子的升学之路提供科学指导！
+```
 
 ### 主要修改和完善点：
 
